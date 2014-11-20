@@ -38,7 +38,7 @@ int naturalVert;
 int naturalHor;
 float x = (screen_width / 2) - 2;
 float y = (screen_height / 2) - 2;
-int shootTimer = millis();
+uint32_t shootTimer = millis();
 float lastHorSpeed = 0.0;
 float lastVertSpeed = 0.0;
 
@@ -47,6 +47,8 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 void newProjectile(float x, float y, float horSpeed, float vertSpeed, int size) {
 	for(int i = 0; i < numProjectiles; i++) {
 		if(P1Projectiles[i].vertSpeed == 0 && P1Projectiles[i].horSpeed == 0) {
+			Serial.print("shots fired: ");
+			Serial.println(i);
 			P1Projectiles[i].hor = x;
 			P1Projectiles[i].vert = y;
 			P1Projectiles[i].horSpeed = horSpeed;
@@ -133,6 +135,7 @@ void updateCharacters(int dt, int vertMove, int horMove, float vertSpeed, float 
 
 void updateProjectiles(int dt, float vertSpeed, float horSpeed, int shooting) {
 	if(shooting && millis() - shootTimer > 500) {
+		Serial.println(shootTimer);
 		newProjectile(x, y, horSpeed, vertSpeed, 2);
 		shootTimer = millis();
 	}
@@ -151,6 +154,8 @@ void getInput(int dt) {
 	float vertSpeed = vertMove * dt / 1000 / 8.0;
 	float horSpeed = horMove * dt / 1000 / 8.0;
 
+	/*
+	// commented out for shooting debug
 	// debug
 	Serial.print(vertMove);
 	Serial.print("  ");
@@ -160,10 +165,10 @@ void getInput(int dt) {
 	Serial.print("  ");
 	Serial.print(horSpeed);
 	Serial.print("       \r");
-
+	*/
 
 	int shooting = !digitalRead(BUTTON_SHOOT);
-
+	
 	updateCharacters(dt, vertMove, horMove, vertSpeed, horSpeed);
 	updateProjectiles(dt, vertSpeed, horSpeed, shooting);
 }
@@ -187,9 +192,10 @@ void setup() {
 	tft.fillRect(x, y, playerSize, playerSize, ST7735_RED);
 }
 
-int lastTime = millis();
+uint32_t lastTime = millis();
+
 void loop() {
-	int now = millis();
+	uint32_t now = millis();
 	int dt = now - lastTime;
 
 	// stuff we need to implement
