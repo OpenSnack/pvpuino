@@ -18,7 +18,7 @@
 #define JOYSTICK_SHOOT_HORIZ 2
 #define JOYSTICK_SHOOT_VERT 3
 
-#define NUM_PROJECTILES 9
+#define NUM_PROJECTILES 20
 
 typedef struct {
 	float vert;
@@ -62,13 +62,17 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 void newProjectile(int dt, Player *player, int size, int damage) {
 	for(int i = 0; i < NUM_PROJECTILES; i++) {
 		Projectile *proj = &player->projectiles[i];
-		if(proj->vertSpeed == 0 && proj->horSpeed == 0) {
-			proj->hor = player->x;
-			proj->vert = player->y;
-			proj->vertSpeed = player->vertShoot / sqrt((player->vertShoot * player->vertShoot) + (player->horShoot * player->horShoot)) / 8.0;
-			proj->horSpeed = player->horShoot / sqrt((player->vertShoot * player->vertShoot) + (player->horShoot * player->horShoot)) / 8.0;
+		float vertShoot = (float)player->vertShoot; /* trust me, we need these two lines */
+		float horShoot = (float)player->horShoot; /* don't ask why */
+		if(proj->vertSpeed == 0.0 && proj->horSpeed == 0.0) {
 			proj->size = size;
 			proj->damage = damage;
+			// this normalizes the shooting input so that magnitude of projectile speed doesn't change
+			proj->hor = player->x + (float)playerSize/2.0 - (float)proj->size/2.0;
+			proj->vert = player->y + (float)playerSize/2.0 - (float)proj->size/2.0;
+			float square = (float)abs((vertShoot * vertShoot) + (horShoot * horShoot));
+			proj->vertSpeed = vertShoot / (float)sqrt(square) / 8.0;
+			proj->horSpeed = horShoot / (float)sqrt(square) / 8.0;
 			tft.fillRect(proj->hor, proj->vert, proj->size, proj->size, ST7735_GREEN);
 			return;
 		}
@@ -83,10 +87,10 @@ void moveProjectile(int dt, Projectile *projectile) {
 
 	if(projectile->hor < 0 || projectile->hor > screen_width - projectile->size || projectile->vert < health_bar_height*2 || projectile->vert > screen_height - health_bar_height*2 - projectile->size) {
 		// reset projectile for re-use
-		projectile->vertSpeed = 0;
-		projectile->horSpeed = 0;
-		projectile->hor = -100; // offscreen
-		projectile->vert = -100;
+		projectile->vertSpeed = 0.0;
+		projectile->horSpeed = 0.0;
+		projectile->hor = -100.0; // offscreen
+		projectile->vert = -100.0;
 	} else {
 		tft.fillRect((int)projectile->hor, (int)projectile->vert, projectile->size, projectile->size, ST7735_BLACK);
 	}
@@ -96,7 +100,7 @@ void moveProjectile(int dt, Projectile *projectile) {
 void checkCollisions() {
 	// checks if player 2 is hit
 	for (int i = 0; i < NUM_PROJECTILES; i++){
-		if(players[0].projectiles[i].vertSpeed != 0 || players[0].projectiles[i].horSpeed != 0){
+		if(players[0].projectiles[i].vertSpeed != 0.0 || players[0].projectiles[i].horSpeed != 0.0){
 			if((players[0].projectiles[i].hor + players[0].projectiles[i].size)  > players[1].x 
 				&& players[0].projectiles[i].hor < players[1].x + playerSize 
 				&& (players[0].projectiles[i].vert + players[0].projectiles[i].size) > players[1].y 
@@ -104,13 +108,13 @@ void checkCollisions() {
 
 				Serial.println("P2 HIT!");
 				players[1].health -= players[0].projectiles[i].damage;
-				players[0].projectiles[i].horSpeed = 0; // reset projectile
-				players[0].projectiles[i].vertSpeed = 0;
+				players[0].projectiles[i].horSpeed = 0.0; // reset projectile
+				players[0].projectiles[i].vertSpeed = 0.0;
 				tft.fillRect(players[0].projectiles[i].hor, players[0].projectiles[i].vert, players[0].projectiles[i].size, players[0].projectiles[i].size, tft.Color565(0x00, 0xff, 0xff));
 				tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
-				players[0].projectiles[i].hor = -100; // offscreen
-				players[0].projectiles[i].vert = -100;
-				tft.fillRect(0, 0, screen_width, health_bar_height, tft.Color565(0x00, 0xff, 0xff));
+				players[0].projectiles[i].hor = -100.0; // offscreen
+				players[0].projectiles[i].vert = -100.0;
+				tft.fillRect(0, 0, screen_width, health_bar_height, ST7735_WHITE);
 				tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
 
 			}
@@ -127,13 +131,13 @@ void checkCollisions() {
 
 				Serial.println("P2 HIT!");
 				players[0].health -= players[1].projectiles[i].damage;
-				players[1].projectiles[i].horSpeed = 0; // reset projectile
-				players[1].projectiles[i].vertSpeed = 0;
+				players[1].projectiles[i].horSpeed = 0.0; // reset projectile
+				players[1].projectiles[i].vertSpeed = 0.0;
 				tft.fillRect(players[1].projectiles[i].hor, players[1].projectiles[i].vert, players[1].projectiles[i].size, players[1].projectiles[i].size, tft.Color565(0x00, 0xff, 0xff));
 				tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
-				players[1].projectiles[i].hor = -100; // offscreen
-				players[1].projectiles[i].vert = -100;
-				tft.fillRect(0, screen_height - health_bar_height, screen_width, health_bar_height, tft.Color565(0x00, 0xff, 0xff));
+				players[1].projectiles[i].hor = -100.0; // offscreen
+				players[1].projectiles[i].vert = -100.0;
+				tft.fillRect(0, screen_height - health_bar_height, screen_width, health_bar_height, ST7735_WHITE);
 				tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
 			}
 		}
@@ -150,7 +154,7 @@ void updateCharacters(int dt, Player *player) {
 	// down movement
 	if(player->vertMove > threshold) {
 		if(newY > screen_height - player->vertSpeed - playerSize - health_bar_height*2) {
-			newY = screen_height - playerSize - health_bar_height*2;
+			newY = (float)(screen_height - playerSize - health_bar_height*2.0);
 		} else {
 			newY += player->vertSpeed;
 		}
@@ -158,7 +162,7 @@ void updateCharacters(int dt, Player *player) {
 	// up movement
 	if(player->vertMove < -threshold) {
 		if(newY < health_bar_height*2 + abs(player->vertSpeed)) {
-			newY = health_bar_height*2;
+			newY = (float)health_bar_height*2.0;
 		} else {
 			newY += player->vertSpeed;
 		}
@@ -166,7 +170,7 @@ void updateCharacters(int dt, Player *player) {
 	// right/left movement
 	if(player->horMove > threshold) {
 		if(newX > screen_width - player->horSpeed - playerSize) {
-			newX = screen_width - playerSize;
+			newX = (float)(screen_width - playerSize);
 		} else {
 			newX += player->horSpeed;
 		}
@@ -174,7 +178,7 @@ void updateCharacters(int dt, Player *player) {
 	// left movement
 	if(player->horMove < -threshold) {
 		if(newX < abs(player->horSpeed)) {
-			newX = 0;
+			newX = 0.0;
 		} else {
 			newX += player->horSpeed;
 		}
@@ -192,8 +196,8 @@ void updateCharacters(int dt, Player *player) {
 }
 
 void updateProjectiles(int dt, Player *player) {
-	if(abs(player->vertShoot) > threshold || abs(player->horShoot > threshold)) {
-		if(millis() - player->shootTimer > 500) {
+	if(abs(player->vertShoot) > threshold || abs(player->horShoot) > threshold) {
+		if(millis() - player->shootTimer > 200) {
 			newProjectile(dt, player, 2, 10);
 			player->shootTimer = millis();
 		}
@@ -209,8 +213,8 @@ void getInput(int dt) {
 	// calibrated center
 	players[0].vertMove = analogRead(JOYSTICK_MOVE_VERT) - players[0].naturalVertMove;
 	players[0].horMove = analogRead(JOYSTICK_MOVE_HORIZ) - players[0].naturalHorMove;
-	players[0].vertSpeed = players[0].vertMove * dt / 1000 / 8.0;
-	players[0].horSpeed = players[0].horMove * dt / 1000 / 8.0;
+	players[0].vertSpeed = players[0].vertMove * dt / 1000.0 / 8.0;
+	players[0].horSpeed = players[0].horMove * dt / 1000.0 / 8.0;
 
 	players[0].vertShoot = analogRead(JOYSTICK_SHOOT_VERT) - players[0].naturalVertShoot;
 	players[0].horShoot = analogRead(JOYSTICK_SHOOT_HORIZ) - players[0].naturalHorShoot;
@@ -228,18 +232,16 @@ void getInput(int dt) {
 	players[1].vertShoot = 0;
 	players[1].horShoot = 0;
 
-	/*
-	// commented out for shooting debug
 	// debug
-	Serial.print(players[0].vertMove);
-	Serial.print("  ");
-	Serial.print(players[0].horMove);
-	Serial.print("  ");
-	Serial.print(players[0].vertSpeed);
-	Serial.print("  ");
-	Serial.print(players[0].horSpeed);
-	Serial.print("       \r");
-	*/	
+	// Serial.print(players[0].vertShoot);
+	// Serial.print("   ");
+	// Serial.print(players[0].horShoot);
+	// Serial.print("   ");
+	// Serial.print(players[0].vertMove);
+	// Serial.print("   ");
+	// Serial.print(players[0].horMove);
+	// Serial.print("       \r");
+	
 }
 
 void setup() {
