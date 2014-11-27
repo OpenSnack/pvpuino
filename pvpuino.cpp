@@ -612,6 +612,78 @@ gameState = 2;
 
 }
 
+void initializeGame() {
+	// intializes player properties
+	for (int i = 0; i < numPlayers; i++){
+		players[i].x = (screen_width / 2) - 2;
+		players[i].health = 128;
+		players[i].shootTimer = millis();
+
+		// resets projectiles
+		for (int k = 0; k < NUM_PROJECTILES; k++) {
+			players[i].projectiles[k].vertSpeed = 0;
+			players[i].projectiles[k].horSpeed = 0;
+			players[i].projectiles[k].vert = -100.0;
+			players[i].projectiles[k].hor = -100.0;
+		}
+	}
+
+	players[0].y = (3* screen_height / 4) - 2;
+	players[1].y = (screen_height / 4) - 2;
+	players[0].color = ST7735_RED;
+	players[1].color = ST7735_BLUE;
+	
+
+	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
+	// draw initial players
+	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
+	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
+
+	// height boundaries
+	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
+	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
+
+	// health bars
+	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
+	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+
+	// draws countdown
+	// 3
+	tft.fillRect(64, 64, 20, 20, ST7735_BLACK);
+	tft.fillRect(64, 68, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(64, 76, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	delay(1000);
+
+	// 2
+	tft.fillRect(64, 64, 20, 20, ST7735_BLACK);
+	tft.fillRect(64, 68, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(68, 76, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	delay(1000);
+	// 1 
+	tft.fillRect(64, 64, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(64, 80, 20, 4, ST7735_BLACK);
+	tft.fillRect(72, 64, 4, 16, ST7735_BLACK);
+	tft.fillRect(68, 68, 4, 4, ST7735_BLACK);
+	tft.fillRect(64, 72, 4, 4, ST7735_BLACK);
+	delay(1000);
+
+	//go
+	tft.fillRect(64, 64, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(40, 64, 20, 20,  ST7735_BLACK);
+	tft.fillRect(68, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(68, 76, 4, 8, tft.Color565(0x00, 0xff, 0xff));
+	
+	tft.fillRect(86, 64, 4, 4,  ST7735_BLACK);
+	tft.fillRect(88, 68, 16, 16,  tft.Color565(0x00, 0xff, 0xff));
+	delay(300);
+
+	tft.fillRect(40, 64, 66, 20,  tft.Color565(0x00, 0xff, 0xff));
+	// finishes drawing countdown
+
+	// enters gameplay state
+	gameState = 3;
+}
+
 void setup() {
 	Serial.begin(9600);
 
