@@ -434,13 +434,14 @@ void initializeGame() {
 	delay(1000);
 
 	//go
-	tft.fillRect(64, 64, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(40, 64, 20, 20,  ST7735_BLACK);
-	tft.fillRect(68, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(68, 76, 4, 8, tft.Color565(0x00, 0xff, 0xff));
-	
-	tft.fillRect(86, 64, 4, 4,  ST7735_BLACK);
-	tft.fillRect(88, 68, 16, 16,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(64, 68, 4, 20,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(44, 64, 20, 20,  ST7735_BLACK);
+	tft.fillRect(48, 68, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(48, 72, 4, 8, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(52, 76, 8, 4, tft.Color565(0x00, 0xff, 0xff));
+
+	tft.fillRect(68, 64, 20, 20,  ST7735_BLACK);
+	tft.fillRect(72, 68, 12, 12,  tft.Color565(0x00, 0xff, 0xff));
 	delay(300);
 
 	tft.fillRect(40, 64, 66, 20,  tft.Color565(0x00, 0xff, 0xff));
