@@ -14,9 +14,10 @@
 // joystick/button pin defines
 #define JOYSTICK_MOVE_HORIZ 0   // Analog input A0 - horizontal
 #define JOYSTICK_MOVE_VERT  1   // Analog input A1 - vertical
-#define JOYSTICK_MOVE_BUTTON 9  // Digital input pin 9 for the button
+#define JOYSTICK_MOVE_BUTTON 2  // Digital input pin 2 for the button
 #define JOYSTICK_SHOOT_HORIZ 2
 #define JOYSTICK_SHOOT_VERT 3
+#define JOYSTICK_SHOOT_BUTTON 3
 
 #define NUM_PROJECTILES 20
 
@@ -56,10 +57,12 @@ const int health_bar_height = 5;
 
 const int numPlayers = 2;
 Player players[numPlayers];
+int gameState = 0;
 
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
-void newProjectile(int dt, Player *player, int size, int damage) {
+// return 1 if we just shot
+int newProjectile(int dt, Player *player, int size, int damage) {
 	for(int i = 0; i < NUM_PROJECTILES; i++) {
 		Projectile *proj = &player->projectiles[i];
 		float vertShoot = (float)player->vertShoot; /* trust me, we need these two lines */
@@ -74,9 +77,10 @@ void newProjectile(int dt, Player *player, int size, int damage) {
 			proj->vertSpeed = vertShoot / (float)sqrt(square) / 8.0;
 			proj->horSpeed = horShoot / (float)sqrt(square) / 8.0;
 			tft.fillRect(proj->hor, proj->vert, proj->size, proj->size, ST7735_GREEN);
-			return;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 void moveProjectile(int dt, Projectile *projectile) {
@@ -196,15 +200,19 @@ void updateCharacters(int dt, Player *player) {
 }
 
 void updateProjectiles(int dt, Player *player) {
+	int shooting;
 	if(abs(player->vertShoot) > threshold || abs(player->horShoot) > threshold) {
-		if(millis() - player->shootTimer > 200) {
-			newProjectile(dt, player, 2, 10);
+		if(millis() - player->shootTimer > 100) {
+			shooting = newProjectile(dt, player, 2, 2);
 			player->shootTimer = millis();
 		}
 	}
 
 	for(int i = 0; i < NUM_PROJECTILES; i++) {
 		moveProjectile(dt, &player->projectiles[i]);
+	}
+	if(shooting) {
+			tft.fillRect(player->x, player->y, playerSize, playerSize, player->color);
 	}
 }
 
@@ -244,10 +252,259 @@ void getInput(int dt) {
 	
 }
 
+void mainMenu() {
+	gameState = 2;
+
+	// draws main menu screen
+	tft.fillScreen(ST7735_BLACK);
+	// P
+	tft.fillRect(12, 32, 4, 24, ST7735_RED);
+	tft.fillRect(16, 32, 4, 4, ST7735_RED);
+	tft.fillRect(20, 36, 4, 4, ST7735_RED);
+	tft.fillRect(16, 40, 4, 4, ST7735_RED);
+	// v
+	tft.fillRect(28, 44, 4, 4, ST7735_WHITE);
+	tft.fillRect(30, 48, 4, 4, ST7735_WHITE);
+	tft.fillRect(32, 52, 4, 4, ST7735_WHITE);
+	tft.fillRect(34, 48, 4, 4, ST7735_WHITE);
+	tft.fillRect(36, 44, 4, 4, ST7735_WHITE);
+	// P
+	tft.fillRect(48, 32, 4, 24, ST7735_BLUE);
+	tft.fillRect(52, 32, 4, 4, ST7735_BLUE);
+	tft.fillRect(56, 36, 4, 4, ST7735_BLUE);
+	tft.fillRect(52, 40, 4, 4, ST7735_BLUE);
+	// u
+	tft.fillRect(64, 44, 12, 12, ST7735_WHITE);
+	tft.fillRect(68, 44, 4, 8, ST7735_BLACK);
+	// i
+	tft.fillRect(80, 36, 4, 4, ST7735_WHITE);
+	tft.fillRect(80, 44, 4, 12, ST7735_WHITE);
+	// n
+	tft.fillRect(88, 42, 4, 2, ST7735_WHITE);
+	tft.fillRect(88, 44, 12, 12, ST7735_WHITE);
+	tft.fillRect(92, 48, 4, 8, ST7735_BLACK);
+	// o
+	tft.fillRect(104, 44, 12, 12, ST7735_WHITE);
+	tft.fillRect(108, 48, 4, 4, ST7735_BLACK);
+
+	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
+	tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+
+	tft.setTextWrap(false);
+
+	tft.setCursor((screen_width - 84)/2 + 28, 82);
+    tft.setTextColor(ST7735_BLACK);
+    tft.print("PLAY!");
+
+    tft.setCursor((screen_width - 84)/2 + 6, 106);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("Instructions");
+    //end of drawing
+
+    // infintie loop until an option is selected
+    uint32_t startTime = millis();
+	while(1) {
+		uint32_t currentTime = millis();
+		uint32_t dt = currentTime - startTime;
+
+		getInput(dt);
+		// update postion on menu, updates program state
+		if (players[0].vertMove > threshold && gameState != 1) {
+			//highlight second button
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 82);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("PLAY!");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 106);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("Instructions");
+
+			gameState = 1;
+		} else if (players[0].vertMove < -threshold && gameState!= 2){
+			//highlight first button
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 82);
+	    	tft.setTextColor(ST7735_BLACK);
+	    	tft.print("PLAY!");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 106);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("Instructions");
+			
+			gameState = 2;
+		}
+
+		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+			break;
+		}
+
+		startTime = currentTime;
+	}
+
+}
+
+void instructionsMenu() {
+	tft.fillScreen(ST7735_BLACK);
+	tft.setTextWrap(true);
+	tft.setCursor(0,0);
+    tft.setTextColor(ST7735_WHITE);
+	tft.print("Instructions coming soon!");
+ 	
+ 	// infintie loop until an option is selected
+ 	uint32_t startTime = millis();
+	while(1) {
+		uint32_t currentTime = millis();
+		uint32_t dt = currentTime - startTime;
+		getInput(dt);
+
+ 		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+			break;
+		}
+
+ 		startTime = currentTime;
+ 	} 
+
+ 	gameState = 0;  
+}
+
+void pauseMenu(){
+	gameState = 3;
+
+	// draws pause menu
+	tft.setTextWrap(false);
+
+	tft.setCursor((screen_width - 84)/2 + 10, 50);
+    tft.setTextColor(ST7735_BLACK);
+    tft.print("Game Paused");
+
+	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+	tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+
+	tft.setCursor((screen_width - 84)/2 + 24, 82);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("Resume");
+
+    tft.setCursor((screen_width - 84)/2 + 6, 106);
+    tft.setTextColor(ST7735_BLACK);
+    tft.print("Exit to Menu");
+    // end of drawing
+
+    // stop multiple presses
+    delay(200);
+
+	uint32_t startTime = millis();
+	// infinite loop until an option is selected
+	while(1) {
+		uint32_t currentTime = millis();
+		uint32_t dt = currentTime - startTime;
+
+		getInput(dt);
+		// update postion on menu, updates program state
+		if (players[0].vertMove > threshold && gameState != 0) {
+			//highlight second button
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+
+			tft.setCursor((screen_width - 84)/2 + 24, 82);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("Resume");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 106);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("Exit to Menu");
+			
+			gameState = 0;
+		} else if (players[0].vertMove < -threshold && gameState!= 3){
+			//highlight first button
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+
+			tft.setCursor((screen_width - 84)/2 + 24, 82);
+	    	tft.setTextColor(ST7735_WHITE);
+	    	tft.print("Resume");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 106);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("Exit to Menu");
+			
+			gameState = 3;
+		}
+
+		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+			break;
+		}
+
+	}
+
+	// draws the gameplay screen back on
+	if (gameState == 3) {
+		tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
+		tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
+		tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
+
+		// height boundaries
+	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
+	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
+
+		// health bars
+		tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
+		tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+
+	}
+}
+
+void initializeGame() {
+	// intializes player properties
+	for (int i = 0; i < numPlayers; i++){
+		players[i].x = (screen_width / 2) - 2;
+		players[i].health = 128;
+		players[i].shootTimer = millis();
+
+		// resets projectiles
+		for (int k = 0; k < NUM_PROJECTILES; k++) {
+			players[i].projectiles[k].vertSpeed = 0;
+			players[i].projectiles[k].horSpeed = 0;
+			players[i].projectiles[k].vert = -100.0;
+			players[i].projectiles[k].hor = -100.0;
+		}
+	}
+
+	players[0].y = (3* screen_height / 4) - 2;
+	players[1].y = (screen_height / 4) - 2;
+	players[0].color = ST7735_RED;
+	players[1].color = ST7735_BLUE;
+	
+
+	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
+	// draw initial players
+	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
+	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
+
+	// height boundaries
+	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
+	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
+
+	// health bars
+	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
+	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+
+	// enters gameplay state
+	gameState = 3;
+}
+
 void setup() {
 	Serial.begin(9600);
 
 	tft.initR(INITR_BLACKTAB); 
+	digitalWrite(JOYSTICK_MOVE_BUTTON, HIGH);
+	digitalWrite(JOYSTICK_SHOOT_BUTTON, HIGH);
 
 	// calibrates the center postion of the joysticks
 	players[0].naturalVertMove = analogRead(JOYSTICK_MOVE_VERT);
@@ -260,33 +517,6 @@ void setup() {
 	players[1].naturalHorMove = 0;
 	players[1].naturalVertShoot = 0;
 	players[1].naturalHorShoot = 0;
-
-	// intializes player positions
-	for (int i = 0; i < numPlayers; i++){
-		players[i].x = (screen_width / 2) - 2;
-		players[i].horSpeed = 0.0;
-		players[i].vertSpeed = 0.0;
-		players[i].health = 128;
-		players[i].shootTimer = millis();
-	}
-
-	players[0].y = (3* screen_height / 4) - 2;
-	players[1].y = (screen_height / 4) - 2;
-	players[0].color = ST7735_RED;
-	players[1].color = ST7735_BLUE;
-	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
-
-	// draw initial players
-	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
-	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
-
-	// height boundaries
-	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
-	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
-
-	// health bars
-	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
-	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
 }
 
 uint32_t lastTime = millis();
@@ -296,11 +526,39 @@ void loop() {
 	int dt = now - lastTime;
 
 	getInput(dt);
-	updateCharacters(dt, &players[0]);
-	updateCharacters(dt, &players[1]);
-	updateProjectiles(dt, &players[0]);
-	updateProjectiles(dt, &players[1]);
-	checkCollisions();
 
-	lastTime = now;
+		// checks current game state
+	switch (gameState) {
+		case 0 :
+			mainMenu();
+			lastTime = millis();
+			break;
+		case 1 :
+			instructionsMenu();
+			lastTime = millis();
+			break;
+		case 2 :
+			initializeGame();
+			lastTime = millis();
+			break;
+		case 3 :
+			updateCharacters(dt, &players[0]);
+			updateCharacters(dt, &players[1]);
+			updateProjectiles(dt, &players[0]);
+			updateProjectiles(dt, &players[1]);
+			checkCollisions();
+
+			if (!digitalRead(JOYSTICK_MOVE_BUTTON)) {
+				gameState = 4;
+			}
+			lastTime = now;
+			break;
+
+		case 4:
+			pauseMenu();
+			lastTime = millis();
+			break;
+	}
+
+	
 }
