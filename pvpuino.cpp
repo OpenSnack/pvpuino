@@ -460,6 +460,77 @@ void pauseMenu(){
 	}
 }
 
+void endMenu(int playerID) {
+gameState = 2;
+
+	// draws pause menu
+	tft.setTextWrap(false);
+
+	tft.setCursor((screen_width - 84)/2 + 10, 50);
+    tft.setTextColor(ST7735_BLACK);
+    tft.print("Game Over Player ");
+    tft.print(playerID + 1);
+    tft.print("Wins!")
+
+	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+	tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+
+	tft.setCursor((screen_width - 84)/2 + 24, 82);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("New Game");
+
+    tft.setCursor((screen_width - 84)/2 + 6, 106);
+    tft.setTextColor(ST7735_BLACK);
+    tft.print("Exit to Menu");
+    // end of drawing
+
+	uint32_t startTime = millis();
+	// infinite loop until an option is selected
+	while(1) {
+		uint32_t currentTime = millis();
+		uint32_t dt = currentTime - startTime;
+
+		getInput(dt);
+		// update postion on menu, updates program state
+		if (players[0].vertMove > threshold && gameState != 0) {
+			//highlight second button
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+
+			tft.setCursor((screen_width - 84)/2 + 24, 82);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("New Game");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 106);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("Exit to Menu");
+			
+			gameState = 0;
+		} else if (players[0].vertMove < -threshold && gameState!= 2){
+			//highlight first button
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+
+			tft.setCursor((screen_width - 84)/2 + 24, 82);
+	    	tft.setTextColor(ST7735_WHITE);
+	    	tft.print("New Game");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 106);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("Exit to Menu");
+			
+			gameState = 2;
+		}
+
+		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+			break;
+		}
+
+	}
+
+
+}
+
 void initializeGame() {
 	// intializes player properties
 	for (int i = 0; i < numPlayers; i++){
@@ -558,6 +629,9 @@ void loop() {
 			pauseMenu();
 			lastTime = millis();
 			break;
+		case 5:
+			endMenu();
+			lastTime = millis();
 	}
 
 	
