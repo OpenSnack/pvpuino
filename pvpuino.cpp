@@ -33,6 +33,7 @@ typedef struct {
 	float horSpeed;
 	int size;
 	int damage;
+	int color;
 } Projectile;
 
 typedef struct {
@@ -83,6 +84,7 @@ int newProjectile(int dt, Player *player, int size, int damage) {
 		if(proj->vertSpeed == 0.0 && proj->horSpeed == 0.0) {
 			proj->size = size;
 			proj->damage = damage;
+			proj->color = player->color;
 			// this normalizes the shooting input so that magnitude of projectile speed doesn't change
 			proj->hor = player->x + (float)playerSize/2.0 - (float)proj->size/2.0;
 			proj->vert = player->y + (float)playerSize/2.0 - (float)proj->size/2.0;
@@ -109,7 +111,7 @@ void moveProjectile(int dt, Projectile *projectile) {
 		projectile->hor = -100.0; // offscreen
 		projectile->vert = -100.0;
 	} else {
-		tft.fillRect((int)projectile->hor, (int)projectile->vert, projectile->size, projectile->size, ST7735_BLACK);
+		tft.fillRect((int)projectile->hor, (int)projectile->vert, projectile->size, projectile->size, projectile->color);
 	}
 
 }
@@ -379,6 +381,65 @@ void instructionsMenu() {
  	gameState = 0;  
 }
 
+void initializeGame() {
+	// intializes player properties
+	for (int i = 0; i < numPlayers; i++){
+		players[i].x = (screen_width / 2) - 2;
+		players[i].health = 128;
+		players[i].shootTimer = millis();
+
+		// resets projectiles
+		for (int k = 0; k < NUM_PROJECTILES; k++) {
+			players[i].projectiles[k].vertSpeed = 0;
+			players[i].projectiles[k].horSpeed = 0;
+			players[i].projectiles[k].vert = -100.0;
+			players[i].projectiles[k].hor = -100.0;
+		}
+	}
+
+	players[0].y = (3* screen_height / 4) - 2;
+	players[1].y = (screen_height / 4) - 2;
+	players[0].color = ST7735_RED;
+	players[1].color = ST7735_BLUE;
+	
+
+	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
+	// draw initial players
+	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
+	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
+
+	// height boundaries
+	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
+	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
+
+	// health bars
+	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
+	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+
+	// draws countdown
+	// 3
+	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
+	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(56, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	delay(1000);
+
+	// 2
+	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
+	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(60, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	delay(1000);
+	// 1 
+	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(64, 68, 4, 20, ST7735_BLACK);
+	delay(1000);
+
+	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
+	// finishes drawing countdown
+	
+	// enters gameplay state
+	gameState = 3;
+}
+
 void pauseMenu(){
 	gameState = 3;
 
@@ -549,67 +610,6 @@ gameState = 2;
 	}
 
 
-}
-
-void initializeGame() {
-	// intializes player properties
-	for (int i = 0; i < numPlayers; i++){
-		players[i].x = (screen_width / 2) - 2;
-		players[i].health = 128;
-		players[i].shootTimer = millis();
-
-		// resets projectiles
-		for (int k = 0; k < NUM_PROJECTILES; k++) {
-			players[i].projectiles[k].vertSpeed = 0;
-			players[i].projectiles[k].horSpeed = 0;
-			players[i].projectiles[k].vert = -100.0;
-			players[i].projectiles[k].hor = -100.0;
-		}
-	}
-
-	players[0].y = (3* screen_height / 4) - 2;
-	players[1].y = (screen_height / 4) - 2;
-	players[0].color = ST7735_RED;
-	players[1].color = ST7735_BLUE;
-	
-
-	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
-	// draw initial players
-	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
-	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
-
-	// height boundaries
-	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
-	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
-
-	// health bars
-	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
-	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
-
-	// draws countdown
-	// 3
-	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
-	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(56, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	delay(1000);
-
-	// 2
-	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
-	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(60, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	delay(1000);
-	// 1 
-	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(56, 84, 20, 4, ST7735_BLACK);
-	tft.fillRect(64, 68, 4, 16, ST7735_BLACK);
-	tft.fillRect(60, 72, 4, 4, ST7735_BLACK);
-	delay(1000);
-
-	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
-	// finishes drawing countdown
-	
-	// enters gameplay state
-	gameState = 3;
 }
 
 void setup() {
