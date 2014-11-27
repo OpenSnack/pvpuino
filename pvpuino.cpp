@@ -12,12 +12,17 @@
 #define TFT_RST  8  // Reset line for TFT (or connect to +5V)
 
 // joystick/button pin defines
-#define JOYSTICK_MOVE_HORIZ 0   // Analog input A0 - horizontal
-#define JOYSTICK_MOVE_VERT  1   // Analog input A1 - vertical
-#define JOYSTICK_MOVE_BUTTON 2  // Digital input pin 2 for the button
-#define JOYSTICK_SHOOT_HORIZ 2
-#define JOYSTICK_SHOOT_VERT 3
-#define JOYSTICK_SHOOT_BUTTON 3
+// player 1
+#define JOYSTICK0_MOVE_HORIZ 0   // Analog input A0 - horizontal
+#define JOYSTICK0_MOVE_VERT  1   // Analog input A1 - vertical
+#define JOYSTICK0_MOVE_BUTTON 2  // Digital input pin 2 for the button
+#define JOYSTICK0_SHOOT_HORIZ 2
+#define JOYSTICK0_SHOOT_VERT 3
+// player 2
+#define JOYSTICK1_MOVE_HORIZ 4
+#define JOYSTICK1_MOVE_VERT 5
+#define JOYSTICK1_SHOOT_HORIZ 6
+#define JOYSTICK1_SHOOT_VERT 7
 
 #define NUM_PROJECTILES 20
 
@@ -29,6 +34,13 @@ typedef struct {
 	int size;
 	int damage;
 } Projectile;
+
+typedef struct {
+	int x;
+	int y;
+	int length;
+	int height;
+} Wall;
 
 typedef struct {
 	float x;
@@ -46,6 +58,7 @@ typedef struct {
 	int naturalHorMove;
 	int naturalVertShoot;
 	int naturalHorShoot;
+	int wins;
 	Projectile projectiles[NUM_PROJECTILES];
 } Player;
 
@@ -54,7 +67,7 @@ const int screen_height = 160;
 const int threshold = 2;
 const int playerSize = 8;
 const int health_bar_height = 5;
-
+const int default_damage = 5;
 const int numPlayers = 2;
 Player players[numPlayers];
 int gameState = 0;
@@ -203,7 +216,7 @@ void updateProjectiles(int dt, Player *player) {
 	int shooting;
 	if(abs(player->vertShoot) > threshold || abs(player->horShoot) > threshold) {
 		if(millis() - player->shootTimer > 100) {
-			shooting = newProjectile(dt, player, 2, 2);
+			shooting = newProjectile(dt, player, 2, default_damage);
 			player->shootTimer = millis();
 		}
 	}
@@ -219,37 +232,29 @@ void updateProjectiles(int dt, Player *player) {
 void getInput(int dt) {
 	// finds the difference between the current joystick potion and the
 	// calibrated center
-	players[0].vertMove = analogRead(JOYSTICK_MOVE_VERT) - players[0].naturalVertMove;
-	players[0].horMove = analogRead(JOYSTICK_MOVE_HORIZ) - players[0].naturalHorMove;
+	players[0].vertMove = analogRead(JOYSTICK0_MOVE_VERT) - players[0].naturalVertMove;
+	players[0].horMove = analogRead(JOYSTICK0_MOVE_HORIZ) - players[0].naturalHorMove;
 	players[0].vertSpeed = players[0].vertMove * dt / 1000.0 / 8.0;
 	players[0].horSpeed = players[0].horMove * dt / 1000.0 / 8.0;
 
-	players[0].vertShoot = analogRead(JOYSTICK_SHOOT_VERT) - players[0].naturalVertShoot;
-	players[0].horShoot = analogRead(JOYSTICK_SHOOT_HORIZ) - players[0].naturalHorShoot;
+	players[0].vertShoot = analogRead(JOYSTICK0_SHOOT_VERT) - players[0].naturalVertShoot;
+	players[0].horShoot = analogRead(JOYSTICK0_SHOOT_HORIZ) - players[0].naturalHorShoot;
 
-	// players[1].vertMove = analogRead(2) - players[1].naturalVertMove;
-	// players[1].horMove = analogRead(3) - players[1].naturalHorMove;
-	// players[1].vertSpeed = players[1].vertMove * dt / 1000 / 8.0;
-	// players[1].horSpeed = players[1].horMove * dt / 1000 / 8.0;
-	
-	// just for meow
-	players[1].vertMove = 0;
-	players[1].horMove = 0;
-	players[1].vertSpeed = 0;
-	players[1].horSpeed = 0;
-	players[1].vertShoot = 0;
-	players[1].horShoot = 0;
+	players[1].vertMove = -(analogRead(JOYSTICK1_MOVE_VERT) - players[1].naturalVertMove);
+	players[1].horMove = -(analogRead(JOYSTICK1_MOVE_HORIZ) - players[1].naturalHorMove);
+	players[1].vertSpeed = players[1].vertMove * dt / 1000 / 8.0;
+	players[1].horSpeed = players[1].horMove * dt / 1000 / 8.0;
 
-	// debug
-	// Serial.print(players[0].vertShoot);
-	// Serial.print("   ");
-	// Serial.print(players[0].horShoot);
-	// Serial.print("   ");
-	// Serial.print(players[0].vertMove);
-	// Serial.print("   ");
-	// Serial.print(players[0].horMove);
-	// Serial.print("       \r");
-	
+	players[1].vertShoot = -(analogRead(JOYSTICK1_SHOOT_VERT) - players[1].naturalVertShoot);
+	players[1].horShoot = -(analogRead(JOYSTICK1_SHOOT_HORIZ) - players[1].naturalHorShoot);
+
+	// disables player2
+	// players[1].vertMove = 0;
+	// players[1].horMove = 0;
+	// players[1].vertSpeed = 0;
+	// players[1].horSpeed = 0;
+	// players[1].vertShoot = 0;
+	// players[1].horShoot = 0;
 }
 
 void mainMenu() {
@@ -341,7 +346,7 @@ void mainMenu() {
 			gameState = 2;
 		}
 
-		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			break;
 		}
 
@@ -364,7 +369,7 @@ void instructionsMenu() {
 		uint32_t dt = currentTime - startTime;
 		getInput(dt);
 
- 		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+ 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			break;
 		}
 
@@ -437,7 +442,7 @@ void pauseMenu(){
 			gameState = 3;
 		}
 
-		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			break;
 		}
 
@@ -466,22 +471,37 @@ gameState = 2;
 	// draws pause menu
 	tft.setTextWrap(false);
 
-	tft.setCursor((screen_width - 84)/2 + 10, 50);
+	tft.setCursor(38, 40);
     tft.setTextColor(ST7735_BLACK);
-    tft.print("Game Over Player ");
+    tft.print("Game Over\n");
+    tft.setCursor(23, 60);
+    tft.print("Player ");
     tft.print(playerID + 1);
-    tft.print("Wins!")
+    tft.print(" Wins!");
 
 	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
 	tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 
-	tft.setCursor((screen_width - 84)/2 + 24, 82);
+	tft.setCursor((screen_width - 84)/2 + 18, 82);
     tft.setTextColor(ST7735_WHITE);
     tft.print("New Game");
 
     tft.setCursor((screen_width - 84)/2 + 6, 106);
     tft.setTextColor(ST7735_BLACK);
     tft.print("Exit to Menu");
+
+    // win counter
+    tft.fillRect(0, screen_height - 16, screen_width, 16, ST7735_BLACK);
+    tft.setCursor(5, screen_height - 12);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("Wins: ");
+    tft.setTextColor(ST7735_RED);
+    tft.print("P1:");
+    tft.print(players[0].wins);
+    tft.setTextColor(ST7735_BLUE);
+    tft.print("  P2:");
+    tft.print(players[1].wins);
+
     // end of drawing
 
 	uint32_t startTime = millis();
@@ -497,7 +517,7 @@ gameState = 2;
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
 
-			tft.setCursor((screen_width - 84)/2 + 24, 82);
+			tft.setCursor((screen_width - 84)/2 + 18, 82);
 		    tft.setTextColor(ST7735_BLACK);
 		    tft.print("New Game");
 
@@ -511,7 +531,7 @@ gameState = 2;
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
 
-			tft.setCursor((screen_width - 84)/2 + 24, 82);
+			tft.setCursor((screen_width - 84)/2 + 18, 82);
 	    	tft.setTextColor(ST7735_WHITE);
 	    	tft.print("New Game");
 
@@ -522,7 +542,7 @@ gameState = 2;
 			gameState = 2;
 		}
 
-		if (!digitalRead(JOYSTICK_MOVE_BUTTON)){
+		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			break;
 		}
 
@@ -574,20 +594,28 @@ void setup() {
 	Serial.begin(9600);
 
 	tft.initR(INITR_BLACKTAB); 
-	digitalWrite(JOYSTICK_MOVE_BUTTON, HIGH);
-	digitalWrite(JOYSTICK_SHOOT_BUTTON, HIGH);
+	digitalWrite(JOYSTICK0_MOVE_BUTTON, HIGH);
 
 	// calibrates the center postion of the joysticks
-	players[0].naturalVertMove = analogRead(JOYSTICK_MOVE_VERT);
-	players[0].naturalHorMove = analogRead(JOYSTICK_MOVE_HORIZ);
-	players[0].naturalVertShoot = analogRead(JOYSTICK_SHOOT_VERT);
-	players[0].naturalHorShoot = analogRead(JOYSTICK_SHOOT_HORIZ);
+	players[0].naturalVertMove = analogRead(JOYSTICK0_MOVE_VERT);
+	players[0].naturalHorMove = analogRead(JOYSTICK0_MOVE_HORIZ);
+	players[0].naturalVertShoot = analogRead(JOYSTICK0_SHOOT_VERT);
+	players[0].naturalHorShoot = analogRead(JOYSTICK0_SHOOT_HORIZ);
 
-	// just for meow
-	players[1].naturalVertMove = 0;
-	players[1].naturalHorMove = 0;
-	players[1].naturalVertShoot = 0;
-	players[1].naturalHorShoot = 0;
+	players[1].naturalVertMove = analogRead(JOYSTICK1_MOVE_VERT);
+	players[1].naturalHorMove = analogRead(JOYSTICK1_MOVE_HORIZ);
+	players[1].naturalVertShoot = analogRead(JOYSTICK1_SHOOT_VERT);
+	players[1].naturalHorShoot = analogRead(JOYSTICK1_SHOOT_HORIZ);
+
+	//initial wins
+	players[0].wins = 0;
+	players[1].wins = 0;
+
+	// disables player 2
+	// players[1].naturalVertMove = 0;
+	// players[1].naturalHorMove = 0;
+	// players[1].naturalVertShoot = 0;
+	// players[1].naturalHorShoot = 0;
 }
 
 uint32_t lastTime = millis();
@@ -619,9 +647,19 @@ void loop() {
 			updateProjectiles(dt, &players[1]);
 			checkCollisions();
 
-			if (!digitalRead(JOYSTICK_MOVE_BUTTON)) {
+			if (!digitalRead(JOYSTICK0_MOVE_BUTTON)) {
 				gameState = 4;
 			}
+
+			if(players[0].health <= 0) {
+				players[1].wins++;
+				endMenu(1);
+			}
+			if(players[1].health <= 0) {
+				players[0].wins++;
+				endMenu(0);
+			}
+
 			lastTime = now;
 			break;
 
@@ -629,9 +667,6 @@ void loop() {
 			pauseMenu();
 			lastTime = millis();
 			break;
-		case 5:
-			endMenu();
-			lastTime = millis();
 	}
 
 	
