@@ -538,7 +538,7 @@ void pauseMenu(){
 }
 
 void endMenu(int playerID) {
-gameState = 2;
+	gameState = 2;
 
 	// draws pause menu
 	tft.setTextWrap(false);
