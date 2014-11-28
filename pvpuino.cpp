@@ -70,10 +70,33 @@ const int playerSize = 8;
 const int health_bar_height = 5;
 const int default_damage = 5;
 const int numPlayers = 2;
+const int powerUpSize = 8;
 Player players[numPlayers];
 int gameState = 0;
 
+typedef struct {
+	uint32_t timer;
+	int x;
+	int y;
+	int type;
+	int onMap;
+} Power;
+
+Power powerUp;
+
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+
+
+uint32_t randomNumber(int bits) {
+	// defines a variable needed by random_32_bit
+	uint32_t value = 0;
+
+	for (int i = 0; i < bits; i++) {
+        value = value + ((analogRead(15) % 2) << i);
+    }
+
+    return value;
+}	
 
 // return 1 if we just shot
 int newProjectile(int dt, Player *player, int size, int damage) {
@@ -158,6 +181,22 @@ void checkCollisions() {
 				players[1].projectiles[i].vert = -100.0;
 				tft.fillRect(0, screen_height - health_bar_height, screen_width, health_bar_height, ST7735_WHITE);
 				tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+			}
+		}
+	}
+
+	// this might works
+	if (powerUp.onMap == 1) {
+		for(int i = 0; i < numPlayers; i++){
+			if(!((players[i].x + playerSize)  < powerUp.x
+				&& players[i].x > powerUp.x + powerUpSize
+				&& (players[i].y + playerSize) < powerUp.y 
+				&& players[i].y > powerUp.y + powerUpSize)){
+
+				powerUp.onMap = 0;
+
+				tft.fillRect(powerUp.x, powerUp.y, powerUpSize, powerUpSize, tft.Color565(0x00, 0xff, 0xff));
+				tft.fillRect(players[i].x, players[i].y, playerSize, playerSize, players[i].color);
 			}
 		}
 	}
@@ -448,6 +487,8 @@ void initializeGame() {
 	// finishes drawing countdown
 
 	// enters gameplay state
+	powerUp.timer = millis();
+	powerUp.onMap = 0;
 	gameState = 3;
 }
 
@@ -620,8 +661,51 @@ void endMenu(int playerID) {
 
 	}
 
+}
+
+/*
+spawn powerup
+apply powerup
+*/
+
+void spawnPowerUp(){
+	if(millis() - powerUp.timer > 5000) {
+		if ((randomNumber(1) == 1) && powerUp.onMap == 0){
+			powerUp.x = randomNumber(7);
+			powerUp.y = randomNumber(7);
+			powerUp.type = randomNumber(2);
+
+			switch(powerUp.type) {
+				case 0: 
+					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_RED);
+					tft.fillRect(powerUp.x, powerUp.y + 15, 8, 2, ST7735_RED);
+					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_RED);
+					break;
+				case 1:
+					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_BLUE);
+					tft.fillRect(powerUp.x, powerUp.y + 15, 8, 2, ST7735_BLUE);
+					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_BLUE);
+					break;
+				case 2:
+					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_YELLOW);
+					tft.fillRect(powerUp.x, powerUp.y + 15, 8, 2, ST7735_YELLOW);
+					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_YELLOW);
+					break;
+				case 3:
+					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_GREEN);
+					tft.fillRect(powerUp.x, powerUp.y + 14, 8, 2, ST7735_GREEN);
+					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_GREEN);
+					break;
+			}
+			
+			powerUp.onMap = 1;
+
+			powerUp.timer = millis();
+		}
+	}
 
 }
+
 
 void setup() {
 	Serial.begin(9600);
@@ -679,6 +763,7 @@ void loop() {
 			updateProjectiles(dt, &players[0]);
 			updateProjectiles(dt, &players[1]);
 			checkCollisions();
+			spawnPowerUp();
 
 			if (!digitalRead(JOYSTICK0_MOVE_BUTTON)) {
 				gameState = 4;
