@@ -101,39 +101,49 @@ uint32_t randomNumber(int bits) {
     return value;
 }	
 
-void spawnPowerUp(){
-	if(millis() - powerUp.timer > 5000 && powerUp.onMap == 0) {
+void drawPowerUp(Power* powerUp) {
+	switch(powerUp->type) {
+		case 0: 
+			tft.drawRect(powerUp->x, powerUp->y + 12, 8, 8, ST7735_RED);
+			tft.fillRect(powerUp->x, powerUp->y + 15, 8, 2, ST7735_RED);
+			tft.fillRect(powerUp->x + 3, powerUp->y + 12, 2, 8, ST7735_RED);
+			break;
+		case 1:
+			tft.drawRect(powerUp->x, powerUp->y + 12, 8, 8, ST7735_BLUE);
+			tft.fillRect(powerUp->x, powerUp->y + 15, 8, 2, ST7735_BLUE);
+			tft.fillRect(powerUp->x + 3, powerUp->y + 12, 2, 8, ST7735_BLUE);
+			break;
+		case 2:
+			tft.drawRect(powerUp->x, powerUp->y + 12, 8, 8, ST7735_YELLOW);
+			tft.fillRect(powerUp->x, powerUp->y + 15, 8, 2, ST7735_YELLOW);
+			tft.fillRect(powerUp->x + 3, powerUp->y + 12, 2, 8, ST7735_YELLOW);
+			break;
+		case 3:
+			tft.drawRect(powerUp->x, powerUp->y + 12, 8, 8, ST7735_GREEN);
+			tft.fillRect(powerUp->x, powerUp->y + 14, 8, 2, ST7735_GREEN);
+			tft.fillRect(powerUp->x + 3, powerUp->y + 12, 2, 8, ST7735_GREEN);
+			break;
+	}
+}
+
+void spawnPowerUp(Power* powerUp){
+	if(millis() - powerUp->timer > 5000 && powerUp->onMap == 0) {
 		if (randomNumber(1) == 1){
-			powerUp.x = randomNumber(7);
-			powerUp.y = randomNumber(7);
-			powerUp.type = randomNumber(2);
+			powerUp->x = randomNumber(7);
+			powerUp->y = randomNumber(7);
+			powerUp->type = randomNumber(2);
 
 			// spawns powerUp based on type generated
-			switch(powerUp.type) {
-				case 0: 
-					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_RED);
-					tft.fillRect(powerUp.x, powerUp.y + 15, 8, 2, ST7735_RED);
-					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_RED);
-					break;
-				case 1:
-					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_BLUE);
-					tft.fillRect(powerUp.x, powerUp.y + 15, 8, 2, ST7735_BLUE);
-					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_BLUE);
-					break;
-				case 2:
-					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_YELLOW);
-					tft.fillRect(powerUp.x, powerUp.y + 15, 8, 2, ST7735_YELLOW);
-					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_YELLOW);
-					break;
-				case 3:
-					tft.drawRect(powerUp.x, powerUp.y + 12, 8, 8, ST7735_GREEN);
-					tft.fillRect(powerUp.x, powerUp.y + 14, 8, 2, ST7735_GREEN);
-					tft.fillRect(powerUp.x + 3, powerUp.y + 12, 2, 8, ST7735_GREEN);
-					break;
-			}
+			drawPowerUp(powerUp);
 			
-			powerUp.onMap = 1;
+			powerUp->onMap = 1;
 		}
+	}
+
+	// redraws power up if it remains active to prevent bullets from
+	// drawing over it
+	if(powerUp->onMap == 1){
+		drawPowerUp(powerUp);
 	}
 }
 
@@ -214,6 +224,7 @@ void moveProjectile(int dt, Projectile *projectile) {
 
 }
 
+// make it take in pointers
 void checkCollisions() {
 	// checks if player 2 is hit
 	for (int i = 0; i < NUM_PROJECTILES; i++){
@@ -810,7 +821,7 @@ void loop() {
 			updateProjectiles(dt, &players[0]);
 			updateProjectiles(dt, &players[1]);
 			checkCollisions();
-			spawnPowerUp();
+			spawnPowerUp(&powerUp);
 
 			if (!digitalRead(JOYSTICK0_MOVE_BUTTON)) {
 				gameState = 4;
