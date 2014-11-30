@@ -75,11 +75,11 @@ typedef struct {
 	int onMap;
 } Power;
 
-Wall level0[4] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140}};
-Wall level1[8] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140},{36, 34, 56, 4},{36, 122, 56, 4},{20, 52, 4, 56},{104, 52, 4, 56}};
-Wall level2[10] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140},{28, 32, 22, 22},{18, 76, 28, 28},{36, 124, 10, 10},{88, 24, 14, 14},{70, 54, 22, 22},{76, 96, 34, 34}};
-Wall level3[14] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140},{62, 22, 4, 12},{62, 48, 4, 12},{62, 74, 4, 12},{62, 100, 4, 12},{62, 126, 4, 12},{10, 78, 12, 4},{34, 78, 12, 4},{58, 78, 12, 4},{82, 78, 12, 4},{106, 78, 12, 4}};
-Wall level4[5] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140},{14, 74, 100, 14}};
+Wall level0[4] = {{0, 5, 128, 5},{0, 150, 128, 5},{-5, 10, 5, 140},{128, 10, 5, 140}};
+Wall level1[8] = {{0, 5, 128, 5},{0, 150, 128, 5},{-5, 10, 5, 140},{128, 10, 5, 140},{36, 34, 56, 4},{36, 122, 56, 4},{20, 52, 4, 56},{104, 52, 4, 56}};
+Wall level2[10] = {{0, 5, 128, 5},{0, 150, 128, 5},{-5, 10, 5, 140},{128, 10, 5, 140},{28, 32, 22, 22},{18, 76, 28, 28},{36, 124, 10, 10},{88, 24, 14, 14},{70, 54, 22, 22},{76, 96, 34, 34}};
+Wall level3[14] = {{0, 5, 128, 5},{0, 150, 128, 5},{-5, 10, 5, 140},{128, 10, 5, 140},{62, 22, 4, 12},{62, 48, 4, 12},{62, 74, 4, 12},{62, 100, 4, 12},{62, 126, 4, 12},{10, 78, 12, 4},{34, 78, 12, 4},{58, 78, 12, 4},{82, 78, 12, 4},{106, 78, 12, 4}};
+Wall level4[5] = {{0, 5, 128, 5},{0, 150, 128, 5},{-5, 10, 5, 140},{128, 10, 5, 140},{14, 74, 100, 14}};
 int numWalls[5] = {4, 8, 10, 14, 5};
 Wall *currentWalls = level2;
 int currentLevel;
@@ -186,7 +186,7 @@ void applyPowerUp(Player* player, Power* powerUp){
 			player->defense = 0;
 			break;
 		case 2:
-			player->damageModifier = 3;
+			player->damageModifier = 2;
 			break;
 		case 3:
 			player->burstLimit = 0;
@@ -314,43 +314,6 @@ void checkCollisions(Player *player1, Player *player2) {
 void updateCharacters(int dt, Player *player) {
 	float newX = player->x;
 	float newY = player->y;
-
-	/* -> checks that the joystick moved
-	   -> checks that we are at any edge of the screen -> stop moving that direction
-	   -> if we are not at a boundary, move the character vertSpeed or horSpeed or both */
-	// down movement
-	// if(player->vertMove > threshold) {
-	// 	if(newY > screen_height - player->vertSpeed - playerSize - health_bar_height*2) {
-	// 		newY = (float)(screen_height - playerSize - health_bar_height*2.0);
-	// 	} else {
-	// 		newY += player->vertSpeed;
-	// 	}
-	// }
-	// // up movement
-	// if(player->vertMove < -threshold) {
-	// 	if(newY < health_bar_height*2 + abs(player->vertSpeed)) {
-	// 		newY = (float)health_bar_height*2.0;
-	// 	} else {
-	// 		newY += player->vertSpeed;
-	// 	}
-	// }
-	// // right/left movement
-	// if(player->horMove > threshold) {
-	// 	if(newX > screen_width - player->horSpeed - playerSize) {
-	// 		newX = (float)(screen_width - playerSize);
-	// 	} else {
-	// 		newX += player->horSpeed;
-	// 	}
-	// }
-	// // left movement
-	// if(player->horMove < -threshold) {
-	// 	if(newX < abs(player->horSpeed)) {
-	// 		newX = 0.0;
-	// 	} else {
-	// 		newX += player->horSpeed;
-	// 	}
-	// }
-
 	
 	Wall wall;
 	int touching = 0;
@@ -601,25 +564,25 @@ void mapSelection() {
 
 	tft.setTextWrap(false);
 
-	tft.setCursor((screen_width - 84)/2 + 28, 36);
+	tft.setCursor((screen_width - 84)/2 + 24, 36);
     tft.setTextColor(ST7735_BLACK);
-    tft.print("MAP1");
+    tft.print("Simple");
 
-    tft.setCursor((screen_width - 84)/2 + 6, 60);
+    tft.setCursor((screen_width - 84)/2 + 27, 60);
     tft.setTextColor(ST7735_WHITE);
-    tft.print("MAP2");
+    tft.print("Arena");
 
-    tft.setCursor((screen_width - 84)/2 + 28, 84);
+    tft.setCursor((screen_width - 84)/2 + 27, 84);
     tft.setTextColor(ST7735_WHITE);
-    tft.print("MAP3");
+    tft.print("Boxes");
 
-    tft.setCursor((screen_width - 84)/2 + 6, 108);
+    tft.setCursor((screen_width - 84)/2 + 24, 108);
     tft.setTextColor(ST7735_WHITE);
-    tft.print("MAP4");
+    tft.print("Plus++");
 
-    tft.setCursor((screen_width - 84)/2 + 6, 132);
+    tft.setCursor((screen_width - 84)/2 + 12, 132);
     tft.setTextColor(ST7735_WHITE);
-    tft.print("MAP5");
+    tft.print("Final Dest.");
 
 	// infinte loop until an option is selected
  	uint32_t startTime = millis();
@@ -635,15 +598,17 @@ void mapSelection() {
 			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
 
-			tft.setCursor((screen_width - 84)/2 + 28, 36);
+			tft.setCursor((screen_width - 84)/2 + 24, 36);
 		    tft.setTextColor(ST7735_BLACK);
-		    tft.print("MAP1");
+		    tft.print("Simple");
 
-		    tft.setCursor((screen_width - 84)/2 + 6, 60);
+		    tft.setCursor((screen_width - 84)/2 + 27, 60);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP2");
+		    tft.print("Arena");
 
-		} else if (players[0].vertMove > threshold && mapID == 1 || players[0].vertMove < -threshold && mapID == 3) {
+		    delay(200);
+
+		} else if ((players[0].vertMove > threshold && mapID == 0) || (players[0].vertMove < -threshold && mapID == 2)) {
 			mapID = 1;
 
 			tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_BLACK);
@@ -652,19 +617,21 @@ void mapSelection() {
 			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
 
-			tft.setCursor((screen_width - 84)/2 + 28, 36);
+			tft.setCursor((screen_width - 84)/2 + 24, 36);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP1");
+		    tft.print("Simple");
 
-			tft.setCursor((screen_width - 84)/2 + 28, 60);
+			tft.setCursor((screen_width - 84)/2 + 27, 60);
 		    tft.setTextColor(ST7735_BLACK);
-		    tft.print("MAP2");
+		    tft.print("Arena");
 
-		    tft.setCursor((screen_width - 84)/2 + 6, 84);
+		    tft.setCursor((screen_width - 84)/2 + 27, 84);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP3");
+		    tft.print("Boxes");
 
-		} else if (players[0].vertMove > threshold && mapID == 2 || players[0].vertMove < -threshold && mapID == 4) {
+		    delay(200);
+
+		} else if ((players[0].vertMove > threshold && mapID == 1) || (players[0].vertMove < -threshold && mapID == 3)) {
 			mapID = 2;
 
 			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_BLACK);
@@ -673,19 +640,21 @@ void mapSelection() {
 			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
 
-			tft.setCursor((screen_width - 84)/2 + 28, 60);
+			tft.setCursor((screen_width - 84)/2 + 27, 60);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP2");
+		    tft.print("Arena");
 
-			tft.setCursor((screen_width - 84)/2 + 28, 84);
+			tft.setCursor((screen_width - 84)/2 + 27, 84);
 		    tft.setTextColor(ST7735_BLACK);
-		    tft.print("MAP3");
+		    tft.print("Boxes");
 
-		    tft.setCursor((screen_width - 84)/2 + 6, 108);
+		    tft.setCursor((screen_width - 84)/2 + 24, 108);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP4");
+		    tft.print("Plus++");
 
-		} else if (players[0].vertMove > threshold && mapID == 3 || players[0].vertMove < -threshold && mapID == 5) {
+		    delay(200);
+
+		} else if ((players[0].vertMove > threshold && mapID == 2) || (players[0].vertMove < -threshold && mapID == 4)) {
 			mapID = 3;
 
 			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_BLACK);
@@ -694,32 +663,36 @@ void mapSelection() {
 			tft.fillRect((screen_width - 84)/2, 128, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
 
-			tft.setCursor((screen_width - 84)/2 + 28, 84);
+			tft.setCursor((screen_width - 84)/2 + 27, 84);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP3");
+		    tft.print("Boxes");
 
-			tft.setCursor((screen_width - 84)/2 + 28, 108);
+			tft.setCursor((screen_width - 84)/2 + 24, 108);
 		    tft.setTextColor(ST7735_BLACK);
-		    tft.print("MAP4");
+		    tft.print("Plus++");
 
-		    tft.setCursor((screen_width - 84)/2 + 6, 132);
+		    tft.setCursor((screen_width - 84)/2 + 12, 132);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP5");
+		    tft.print("Final Dest.");
 
-		} else if (players[0].vertMove > threshold && mapID == 4) {
+		    delay(200);
+
+		} else if (players[0].vertMove > threshold && mapID == 3) {
 			mapID = 4;
 
 			tft.fillRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
 
-			tft.setCursor((screen_width - 84)/2 + 28, 108);
+			tft.setCursor((screen_width - 84)/2 + 24, 108);
 		    tft.setTextColor(ST7735_WHITE);
-		    tft.print("MAP4");
+		    tft.print("Plus++");
 
-			tft.setCursor((screen_width - 84)/2 + 28, 132);
+			tft.setCursor((screen_width - 84)/2 + 12, 132);
 		    tft.setTextColor(ST7735_BLACK);
-		    tft.print("MAP5");
+		    tft.print("Final Dest.");
+
+		    delay(200);
 
 		}
 
@@ -735,7 +708,7 @@ void mapSelection() {
 }
 
 void mainMenu() {
-	int menuSelection = 0;
+	int menuSelection = 1;
 
 	// draws main menu screen
 	tft.fillScreen(ST7735_BLACK);
@@ -962,7 +935,7 @@ void pauseMenu(){
 }
 
 void endMenu(int playerID) {
-	gameState = 2;
+	int menuSelection = 1;
 
 	// draws pause menu
 	tft.setTextWrap(false);
@@ -1008,7 +981,7 @@ void endMenu(int playerID) {
 
 		getInput(dt);
 		// update postion on menu, updates program state
-		if (players[0].vertMove > threshold && gameState != 0) {
+		if (players[0].vertMove > threshold && menuSelection != 0) {
 			//highlight second button
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
@@ -1021,8 +994,8 @@ void endMenu(int playerID) {
 		    tft.setTextColor(ST7735_WHITE);
 		    tft.print("Exit to Menu");
 			
-			gameState = 0;
-		} else if (players[0].vertMove < -threshold && gameState != 2){
+			menuSelection = 0;
+		} else if (players[0].vertMove < -threshold && menuSelection != 1){
 			//highlight first button
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
@@ -1035,12 +1008,17 @@ void endMenu(int playerID) {
 		    tft.setTextColor(ST7735_BLACK);
 		    tft.print("Exit to Menu");
 			
-			gameState = 2;
+			menuSelection = 1;
 		}
 
 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			break;
 		}
+	}
+	if (menuSelection == 0){
+		gameState = 0;
+	} else {
+		mapSelection();
 	}
 }
 
