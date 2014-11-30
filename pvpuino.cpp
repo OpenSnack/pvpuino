@@ -699,14 +699,16 @@ void pauseMenu(){
 		tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
 
 
-	// updates power up timers
-	int timeDiff = millis() - enterTime;
+		// updates power up timers
+		int timeDiff = millis() - enterTime;
 
-	for (int i = 0; i < numPlayers; i++){
-		if (players[i].powerUpTimer != -1) {
-			players[i].powerUpTimer += timeDiff;
+		for (int i = 0; i < numPlayers; i++){
+			if (players[i].powerUpTimer != -1) {
+				players[i].powerUpTimer += timeDiff;
+			}
 		}
-	}
+
+		powerUp.timer += timeDiff;
 
 	}
 }
