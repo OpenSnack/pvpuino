@@ -81,8 +81,9 @@ Wall level2[10] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2,
 Wall level3[14] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140},{62, 22, 4, 12},{62, 48, 4, 12},{62, 74, 4, 12},{62, 100, 4, 12},{62, 126, 4, 12},{10, 78, 12, 4},{34, 78, 12, 4},{58, 78, 12, 4},{82, 78, 12, 4},{106, 78, 12, 4}};
 Wall level4[5] = {{0, 8, 128, 2},{0, 150, 128, 2},{-2, 10, 2, 140},{128, 10, 2, 140},{14, 74, 100, 14}};
 int numWalls[5] = {4, 8, 10, 14, 5};
-Wall *currentLevel = level2;
-int currentWalls;
+Wall *currentWalls = level2;
+int currentLevel;
+
 
 const int screen_width = 128;
 const int screen_height = 160;
@@ -261,8 +262,8 @@ void moveProjectile(int dt, Projectile *proj) {
 	proj->y += proj->vertSpeed * dt;
 
 	Wall wall;
-	for(int i = 0; i < currentWalls; i++) {
-		wall = currentLevel[i];
+	for(int i = 0; i < numWalls[currentLevel]; i++) {
+		wall = currentWalls[i];
 		if(collide(proj->x, proj->y, proj->size, proj->size, wall.x, wall.y, wall.width, wall.height)) {
 			proj->vertSpeed = 0.0;
 			proj->horSpeed = 0.0;
@@ -356,8 +357,8 @@ void updateCharacters(int dt, Player *player) {
 
 	// down movement
 	if(player->vertMove > threshold) {
-		for(int i = 0; i < currentWalls; i++) {
-			wall = currentLevel[i];
+		for(int i = 0; i < numWalls[currentLevel]; i++) {
+			wall = currentWalls[i];
 			if(newY + playerSize > wall.y - player->vertSpeed && newY + playerSize < wall.y + wall.height - player->vertSpeed) {
 				if(newX + playerSize > wall.x && newX < wall.x + wall.width) {
 					newY = (float)(wall.y - playerSize);
@@ -374,8 +375,8 @@ void updateCharacters(int dt, Player *player) {
 
 	// up movement
 	if(player->vertMove < -threshold) {
-		for(int i = 0; i < currentWalls; i++) {
-			wall = currentLevel[i];
+		for(int i = 0; i < numWalls[currentLevel]; i++) {
+			wall = currentWalls[i];
 			if(newY < wall.y + wall.height - player->vertSpeed && newY > wall.y - player->vertSpeed) {
 				if(newX + playerSize > wall.x && newX < wall.x + wall.width) {
 					newY = (float)(wall.y + wall.height);
@@ -392,8 +393,8 @@ void updateCharacters(int dt, Player *player) {
 
 	// right movement
 	if(player->horMove > threshold) {
-		for(int i = 0; i < currentWalls; i++) {
-			wall = currentLevel[i];
+		for(int i = 0; i < numWalls[currentLevel]; i++) {
+			wall = currentWalls[i];
 			if(newX + playerSize > wall.x - player->horSpeed && newX + playerSize < wall.x + wall.width - player->horSpeed) {
 				if(newY + playerSize > wall.y && newY < wall.y + wall.height) {
 					newX = (float)(wall.x - playerSize);
@@ -410,8 +411,8 @@ void updateCharacters(int dt, Player *player) {
 
 	// left movement
 	if(player->horMove < -threshold) {
-		for(int i = 0; i < currentWalls; i++) {
-			wall = currentLevel[i];
+		for(int i = 0; i < numWalls[currentLevel]; i++) {
+			wall = currentWalls[i];
 			if(newX < wall.x + wall.width - player->horSpeed && newX > wall.x - player->horSpeed) {
 				if(newY + playerSize > wall.y && newY < wall.y + wall.height) {
 					newX = (float)(wall.x + wall.width);
@@ -484,8 +485,257 @@ void getInput(int dt) {
 	// players[1].horShoot = 0;
 }
 
-void mainMenu() {
+void initializeGame() {
+	// intializes player properties
+	for (int i = 0; i < numPlayers; i++){
+		players[i].x = (screen_width / 2) - 2;
+		players[i].health = 128;
+		players[i].defense = 1;
+		players[i].damageModifier = 1;
+		players[i].burstLimit = 100;
+		// -1 state represents not having a powerUp
+		players[i].powerUpTimer = -1;
+		players[i].shootTimer = millis();
+
+		// resets projectiles
+		for (int k = 0; k < NUM_PROJECTILES; k++) {
+			players[i].projectiles[k].vertSpeed = 0;
+			players[i].projectiles[k].horSpeed = 0;
+			players[i].projectiles[k].y = -100.0;
+			players[i].projectiles[k].x = -100.0;
+		}
+	}
+
+	players[0].y = (3* screen_height / 4) - 2;
+	players[1].y = (screen_height / 4) - 2;
+	players[0].color = ST7735_RED;
+	players[1].color = ST7735_BLUE;
+
+	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
+
+	// load chosen level
+	switch (currentLevel) {
+		case 0:
+			currentWalls = level0;
+			break;
+		case 1:
+			currentWalls = level1;
+			break;
+		case 2:
+			currentWalls = level2;
+			break;
+		case 3:
+			currentWalls = level3;
+			break;
+		case 4:
+			currentWalls = level4;
+			break;
+	}
+
+	drawWalls(currentWalls, numWalls[currentLevel]);
+
+	// draw initial players
+	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
+	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
+
+	// height boundaries
+	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
+	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
+
+	// health bars
+	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
+	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+
+	// draws countdown
+	// 3
+	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
+	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(56, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	delay(1000);
+
+	// 2
+	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
+	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(60, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	delay(1000);
+	// 1 
+	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(64, 68, 4, 20, ST7735_BLACK);
+	delay(1000);
+
+	//go
+	tft.fillRect(64, 68, 4, 20,  tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(44, 64, 20, 20,  ST7735_BLACK);
+	tft.fillRect(48, 68, 16, 4, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(48, 72, 4, 8, tft.Color565(0x00, 0xff, 0xff));
+	tft.fillRect(52, 76, 8, 4, tft.Color565(0x00, 0xff, 0xff));
+
+	tft.fillRect(68, 64, 20, 20,  ST7735_BLACK);
+	tft.fillRect(72, 68, 12, 12,  tft.Color565(0x00, 0xff, 0xff));
+	delay(300);
+
+	tft.fillRect(40, 64, 66, 20,  tft.Color565(0x00, 0xff, 0xff));
+	// finishes drawing countdown
+
+	drawWalls(currentWalls, numWalls[currentLevel]);
+
+	// enters gameplay state
+	powerUp.timer = millis();
+	powerUp.onMap = 0;
 	gameState = 2;
+}
+
+void mapSelection() {
+	int mapID = 0;
+
+	tft.fillScreen(ST7735_BLACK);
+	tft.setCursor((screen_width - 84)/2 + 10, 24);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("Select Map");
+
+    tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_WHITE);
+	tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
+	tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
+	tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
+	tft.drawRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
+
+	tft.setTextWrap(false);
+
+	tft.setCursor((screen_width - 84)/2 + 28, 36);
+    tft.setTextColor(ST7735_BLACK);
+    tft.print("MAP1");
+
+    tft.setCursor((screen_width - 84)/2 + 6, 60);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("MAP2");
+
+    tft.setCursor((screen_width - 84)/2 + 28, 84);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("MAP3");
+
+    tft.setCursor((screen_width - 84)/2 + 6, 108);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("MAP4");
+
+    tft.setCursor((screen_width - 84)/2 + 6, 132);
+    tft.setTextColor(ST7735_WHITE);
+    tft.print("MAP5");
+
+	// infinte loop until an option is selected
+ 	uint32_t startTime = millis();
+	while(1) {
+		uint32_t currentTime = millis();
+		uint32_t dt = currentTime - startTime;
+		getInput(dt);
+
+		if (players[0].vertMove < -threshold && mapID == 1) {
+			mapID = 0;
+
+			tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 36);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("MAP1");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 60);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP2");
+
+		} else if (players[0].vertMove > threshold && mapID == 1 || players[0].vertMove < -threshold && mapID == 3) {
+			mapID = 1;
+
+			tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 32, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 36);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP1");
+
+			tft.setCursor((screen_width - 84)/2 + 28, 60);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("MAP2");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 84);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP3");
+
+		} else if (players[0].vertMove > threshold && mapID == 2 || players[0].vertMove < -threshold && mapID == 4) {
+			mapID = 2;
+
+			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 60);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP2");
+
+			tft.setCursor((screen_width - 84)/2 + 28, 84);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("MAP3");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 108);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP4");
+
+		} else if (players[0].vertMove > threshold && mapID == 3 || players[0].vertMove < -threshold && mapID == 5) {
+			mapID = 3;
+
+			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 128, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 84);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP3");
+
+			tft.setCursor((screen_width - 84)/2 + 28, 108);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("MAP4");
+
+		    tft.setCursor((screen_width - 84)/2 + 6, 132);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP5");
+
+		} else if (players[0].vertMove > threshold && mapID == 4) {
+			mapID = 4;
+
+			tft.fillRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
+
+			tft.setCursor((screen_width - 84)/2 + 28, 108);
+		    tft.setTextColor(ST7735_WHITE);
+		    tft.print("MAP4");
+
+			tft.setCursor((screen_width - 84)/2 + 28, 132);
+		    tft.setTextColor(ST7735_BLACK);
+		    tft.print("MAP5");
+
+		}
+
+ 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
+			break;
+		}
+
+ 		startTime = currentTime;
+ 	} 
+
+ 	currentLevel = mapID;
+ 	initializeGame();
+}
+
+void mainMenu() {
+	int menuSelection = 0;
 
 	// draws main menu screen
 	tft.fillScreen(ST7735_BLACK);
@@ -541,7 +791,7 @@ void mainMenu() {
 
 		getInput(dt);
 		// update postion on menu, updates program state
-		if (players[0].vertMove > threshold && gameState != 1) {
+		if (players[0].vertMove > threshold && menuSelection != 0) {
 			//highlight second button
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
@@ -555,8 +805,8 @@ void mainMenu() {
 		    tft.setTextColor(ST7735_BLACK);
 		    tft.print("Instructions");
 
-			gameState = 1;
-		} else if (players[0].vertMove < -threshold && gameState!= 2){
+			menuSelection = 0;
+		} else if (players[0].vertMove < -threshold && menuSelection != 1){
 			//highlight first button
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
@@ -570,7 +820,7 @@ void mainMenu() {
 		    tft.setTextColor(ST7735_WHITE);
 		    tft.print("Instructions");
 			
-			gameState = 2;
+			menuSelection = 1;
 		}
 
 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
@@ -579,6 +829,13 @@ void mainMenu() {
 
 		startTime = currentTime;
 	}
+
+	if (menuSelection == 0){
+		gameState = 1;
+	} else {
+		mapSelection();
+	}
+
 }
 
 void instructionsMenu() {
@@ -605,108 +862,8 @@ void instructionsMenu() {
  	gameState = 0;  
 }
 
-void initializeGame(int level) {
-	// intializes player properties
-	for (int i = 0; i < numPlayers; i++){
-		players[i].x = (screen_width / 2) - 2;
-		players[i].health = 128;
-		players[i].defense = 1;
-		players[i].damageModifier = 1;
-		players[i].burstLimit = 100;
-		// -1 state represents not having a powerUp
-		players[i].powerUpTimer = -1;
-		players[i].shootTimer = millis();
-
-		// resets projectiles
-		for (int k = 0; k < NUM_PROJECTILES; k++) {
-			players[i].projectiles[k].vertSpeed = 0;
-			players[i].projectiles[k].horSpeed = 0;
-			players[i].projectiles[k].y = -100.0;
-			players[i].projectiles[k].x = -100.0;
-		}
-	}
-
-	players[0].y = (3* screen_height / 4) - 2;
-	players[1].y = (screen_height / 4) - 2;
-	players[0].color = ST7735_RED;
-	players[1].color = ST7735_BLUE;
-
-	tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
-
-	// load chosen level
-	switch (level) {
-		case 0:
-			currentLevel = level0;
-			break;
-		case 1:
-			currentLevel = level1;
-			break;
-		case 2:
-			currentLevel = level2;
-			break;
-		case 3:
-			currentLevel = level3;
-			break;
-		case 4:
-			currentLevel = level4;
-			break;
-	}
-	currentWalls = numWalls[level];
-	drawWalls(currentLevel, currentWalls);
-
-	// draw initial players
-	tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
-	tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
-
-	// height boundaries
-	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
-	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
-
-	// health bars
-	tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
-	tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
-
-	// draws countdown
-	// 3
-	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
-	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(56, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	delay(1000);
-
-	// 2
-	tft.fillRect(56, 68, 20, 20, ST7735_BLACK);
-	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(60, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	delay(1000);
-	// 1 
-	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(64, 68, 4, 20, ST7735_BLACK);
-	delay(1000);
-
-	//go
-	tft.fillRect(64, 68, 4, 20,  tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(44, 64, 20, 20,  ST7735_BLACK);
-	tft.fillRect(48, 68, 16, 4, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(48, 72, 4, 8, tft.Color565(0x00, 0xff, 0xff));
-	tft.fillRect(52, 76, 8, 4, tft.Color565(0x00, 0xff, 0xff));
-
-	tft.fillRect(68, 64, 20, 20,  ST7735_BLACK);
-	tft.fillRect(72, 68, 12, 12,  tft.Color565(0x00, 0xff, 0xff));
-	delay(300);
-
-	tft.fillRect(40, 64, 66, 20,  tft.Color565(0x00, 0xff, 0xff));
-	// finishes drawing countdown
-
-	drawWalls(currentLevel, numWalls[level]);
-
-	// enters gameplay state
-	powerUp.timer = millis();
-	powerUp.onMap = 0;
-	gameState = 3;
-}
-
-void pauseMenu(int level){
-	gameState = 3;
+void pauseMenu(){
+	gameState = 2;
 	int enterTime = millis();
 
 	// draws pause menu
@@ -753,7 +910,7 @@ void pauseMenu(int level){
 		    tft.print("Exit to Menu");
 			
 			gameState = 0;
-		} else if (players[0].vertMove < -threshold && gameState!= 3){
+		} else if (players[0].vertMove < -threshold && gameState!= 2){
 			//highlight first button
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
@@ -766,7 +923,7 @@ void pauseMenu(int level){
 		    tft.setTextColor(ST7735_BLACK);
 		    tft.print("Exit to Menu");
 			
-			gameState = 3;
+			gameState = 2;
 		}
 
 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
@@ -776,7 +933,7 @@ void pauseMenu(int level){
 	}
 
 	// draws the gameplay screen back on
-	if (gameState == 3) {
+	if (gameState == 2) {
 		tft.fillScreen(tft.Color565(0x00, 0xff, 0xff));
 		tft.fillRect(players[0].x, players[0].y, playerSize, playerSize, players[0].color);
 		tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
@@ -790,7 +947,7 @@ void pauseMenu(int level){
 		tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
 
 		// walls
-		drawWalls(currentLevel, numWalls[level]);
+		drawWalls(currentWalls, numWalls[currentLevel]);
 
 		// updates power up timers
 		int timeDiff = millis() - enterTime;
@@ -923,7 +1080,6 @@ void loop() {
 
 	getInput(dt);
 
-	int currentWalls = sizeof(*currentLevel)/sizeof(Wall);
 	// checks current game state
 	switch (gameState) {
 		case 0 :
@@ -935,10 +1091,6 @@ void loop() {
 			lastTime = millis();
 			break;
 		case 2 :
-			initializeGame(2);
-			lastTime = millis();
-			break;
-		case 3 :
 			updateCharacters(dt, &players[0]);
 			updateCharacters(dt, &players[1]);
 			updateProjectiles(dt, &players[0]);
@@ -948,7 +1100,7 @@ void loop() {
 			spawnPowerUp(&powerUp);
 
 			if (!digitalRead(JOYSTICK0_MOVE_BUTTON)) {
-				gameState = 4;
+				gameState = 3;
 			}
 
 			if(players[1].health <= 0) {
@@ -962,9 +1114,8 @@ void loop() {
 
 			lastTime = now;
 			break;
-
-		case 4:
-			pauseMenu(2);
+		case 3:
+			pauseMenu();
 			lastTime = millis();
 			break;
 	}
