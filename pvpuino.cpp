@@ -800,12 +800,7 @@ void pauseMenu(int level){
 				players[i].powerUpTimer += timeDiff;
 			}
 		}
-<<<<<<< HEAD
-=======
-
 		powerUp.timer += timeDiff;
-
->>>>>>> FETCH_HEAD
 	}
 }
 
