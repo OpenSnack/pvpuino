@@ -74,7 +74,7 @@ const int playerSize = 8;
 const int health_bar_height = 5;
 const int default_damage = 5;
 const int numPlayers = 2;
-const int powerUpSize = 8;
+const int power_up_size = 8;
 Player players[numPlayers];
 int gameState = 0;
 
@@ -104,24 +104,24 @@ uint32_t randomNumber(int bits) {
 void drawPowerUp(Power* powerUp) {
 	switch(powerUp->type) {
 		case 0: 
-			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_RED);
-			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_RED);
-			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_RED);
+			tft.drawRect(powerUp->x, powerUp->y, power_up_size, power_up_size, ST7735_RED);
+			tft.fillRect(powerUp->x, powerUp->y + 3, power_up_size, 2, ST7735_RED);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, power_up_size, ST7735_RED);
 			break;
 		case 1:
-			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_BLUE);
-			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_BLUE);
-			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_BLUE);
+			tft.drawRect(powerUp->x, powerUp->y, power_up_size, power_up_size, ST7735_BLUE);
+			tft.fillRect(powerUp->x, powerUp->y + 3, power_up_size, 2, ST7735_BLUE);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, power_up_size, ST7735_BLUE);
 			break;
 		case 2:
-			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_YELLOW);
-			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_YELLOW);
-			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_YELLOW);
+			tft.drawRect(powerUp->x, powerUp->y, power_up_size, power_up_size, ST7735_YELLOW);
+			tft.fillRect(powerUp->x, powerUp->y + 3, power_up_size, 2, ST7735_YELLOW);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, power_up_size, ST7735_YELLOW);
 			break;
 		case 3:
-			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_GREEN);
-			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_GREEN);
-			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_GREEN);
+			tft.drawRect(powerUp->x, powerUp->y, power_up_size, power_up_size, ST7735_GREEN);
+			tft.fillRect(powerUp->x, powerUp->y + 3, power_up_size, 2, ST7735_GREEN);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, power_up_size, ST7735_GREEN);
 			break;
 	}
 }
@@ -132,8 +132,8 @@ void spawnPowerUp(Power* powerUp){
 			// add while loop to produce random x and ys till it spanws outside of a wall
 			int randomX = randomNumber(7);
 			int randomY = randomNumber(7);
-			powerUp->x = min(randomX, screen_width - powerUpSize);
-			powerUp->y = constrain(randomY, health_bar_height*2, screen_height - health_bar_height*2 - powerUpSize);
+			powerUp->x = min(randomX, screen_width - power_up_size);
+			powerUp->y = constrain(randomY, health_bar_height*2, screen_height - health_bar_height*2 - power_up_size);
 			powerUp->type = randomNumber(2);
 			powerUp->onMap = 1;
 		}
@@ -170,14 +170,15 @@ void applyPowerUp(Player* player, Power* powerUp){
 			break;
 	}
 
-	if (player->color == ST7735_RED) {
-		tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height, ST7735_YELLOW);
-	} else if (player->color == ST7735_BLUE){
-		tft.fillRect(0, health_bar_height, screen_width, health_bar_height, ST7735_YELLOW);
+	if (powerUp->type > 0) {
+		if (player->color == ST7735_RED) {
+			tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height, ST7735_YELLOW);
+		} else if (player->color == ST7735_BLUE){
+			tft.fillRect(0, health_bar_height, screen_width, health_bar_height, ST7735_YELLOW);
+		}
+		player->powerUpTimer = millis();
 	}
-
-	player->powerUpTimer = millis();
-
+	
 	// allows another power up to spawn
 	powerUp->onMap = 0;
 	powerUp->timer = millis();
@@ -300,11 +301,11 @@ void checkCollisions() {
 	if (powerUp.onMap == 1) {
 		for(int i = 0; i < numPlayers; i++){
 			if(players[i].x + playerSize/2 > powerUp.x
-				&& players[i].x + playerSize/2 < powerUp.x + powerUpSize
+				&& players[i].x + playerSize/2 < powerUp.x + power_up_size
 				&& players[i].y + playerSize/2 > powerUp.y 
-				&& players[i].y + playerSize/2 < powerUp.y + powerUpSize){
+				&& players[i].y + playerSize/2 < powerUp.y + power_up_size){
 
-				tft.fillRect(powerUp.x, powerUp.y, powerUpSize, powerUpSize, tft.Color565(0x00, 0xff, 0xff));
+				tft.fillRect(powerUp.x, powerUp.y, power_up_size, power_up_size, tft.Color565(0x00, 0xff, 0xff));
 				tft.fillRect(players[i].x, players[i].y, playerSize, playerSize, players[i].color);
 
 				// applys power up effect to player
@@ -616,7 +617,7 @@ void initializeGame() {
 
 void pauseMenu(){
 	gameState = 3;
-
+	int enterTime = millis();
 	// draws pause menu
 	tft.setTextWrap(false);
 
@@ -690,12 +691,22 @@ void pauseMenu(){
 		tft.fillRect(players[1].x, players[1].y, playerSize, playerSize, players[1].color);
 
 		// height boundaries
-	tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
-	tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
+		tft.fillRect(0, 0, screen_width, health_bar_height*2, ST7735_WHITE);
+		tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height*2, ST7735_WHITE);
 
 		// health bars
 		tft.fillRect(0, 0, players[1].health, health_bar_height, ST7735_BLUE);
 		tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+
+
+	// updates power up timers
+	int timeDiff = millis() - enterTime;
+
+	for (int i = 0; i < numPlayers; i++){
+		if (players[i].powerUpTimer != -1) {
+			players[i].powerUpTimer += timeDiff;
+		}
+	}
 
 	}
 }
