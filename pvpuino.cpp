@@ -152,13 +152,28 @@ void drawPowerUp(Power* powerUp) {
 void spawnPowerUp(Power* powerUp){
 	if(millis() - powerUp->timer > 5000 && powerUp->onMap == 0) {
 		if (randomNumber(1)){
-			// add while loop to produce random x and ys till it spanws outside of a wall
+			
 			int randomX = randomNumber(7);
 			int randomY = randomNumber(7);
-			powerUp->x = min(randomX, screen_width - powerUpSize);
-			powerUp->y = constrain(randomY, health_bar_height*2, screen_height - health_bar_height*2 - powerUpSize);
-			powerUp->type = randomNumber(2);
-			powerUp->onMap = 1;
+
+			Wall wall;
+			int safeWalls = 0;
+
+			for(int i = 0; i < numWalls[currentLevel]; i++) {
+				wall = currentWalls[i];
+				if (collide(randomX, randomY, powerUpSize, powerUpSize, wall.x, wall.y, wall.width, wall.height)){
+					break;
+				}
+				safeWalls++;
+			}
+
+			if (safeWalls == numWalls[currentLevel]){
+				powerUp->x = min(randomX, screen_width - powerUpSize);
+				powerUp->y = constrain(randomY, health_bar_height*2, screen_height - health_bar_height*2 - powerUpSize);
+				powerUp->type = randomNumber(2);
+				powerUp->onMap = 1;	
+			}
+		
 		}
 	}
 
