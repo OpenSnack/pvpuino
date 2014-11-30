@@ -48,6 +48,10 @@ typedef struct {
 	float y;
 	uint32_t color;
 	int health;
+	int defense;
+	int damageModifier;
+	int burstLimit;
+	uint32_t powerUpTimer;
 	uint32_t shootTimer;
 	int horMove;
 	int vertMove;
@@ -70,10 +74,139 @@ const int playerSize = 8;
 const int health_bar_height = 5;
 const int default_damage = 5;
 const int numPlayers = 2;
+const int powerUpSize = 8;
 Player players[numPlayers];
 int gameState = 0;
 
+typedef struct {
+	uint32_t timer;
+	int x;
+	int y;
+	int type;
+	int onMap;
+} Power;
+
+Power powerUp;
+
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+
+// generates a random number with a specified amount of bits
+uint32_t randomNumber(int bits) {
+	uint32_t value = 0;
+
+	for (int i = 0; i < bits; i++) {
+        value = value + ((analogRead(15) % 2) << i);
+    }
+
+    return value;
+}	
+
+void drawPowerUp(Power* powerUp) {
+	switch(powerUp->type) {
+		case 0: 
+			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_RED);
+			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_RED);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_RED);
+			break;
+		case 1:
+			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_BLUE);
+			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_BLUE);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_BLUE);
+			break;
+		case 2:
+			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_YELLOW);
+			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_YELLOW);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_YELLOW);
+			break;
+		case 3:
+			tft.drawRect(powerUp->x, powerUp->y, powerUpSize, powerUpSize, ST7735_GREEN);
+			tft.fillRect(powerUp->x, powerUp->y + 3, powerUpSize, 2, ST7735_GREEN);
+			tft.fillRect(powerUp->x + 3, powerUp->y, 2, powerUpSize, ST7735_GREEN);
+			break;
+	}
+}
+
+void spawnPowerUp(Power* powerUp){
+	if(millis() - powerUp->timer > 5000 && powerUp->onMap == 0) {
+		if (randomNumber(1)){
+			// add while loop to produce random x and ys till it spanws outside of a wall
+			int randomX = randomNumber(7);
+			int randomY = randomNumber(7);
+			powerUp->x = min(randomX, screen_width - powerUpSize);
+			powerUp->y = constrain(randomY, health_bar_height*2, screen_height - health_bar_height*2 - powerUpSize);
+			powerUp->type = randomNumber(2);
+			powerUp->onMap = 1;
+		}
+	}
+
+	// redraws power up if it remains active to prevent bullets from
+	// drawing over it
+	if(powerUp->onMap){
+		drawPowerUp(powerUp);
+	}
+}
+
+void applyPowerUp(Player* player, Power* powerUp){
+	switch (powerUp->type) {
+		case 0:
+			player->health += 30;
+			// updates health bar
+			if (player->color == ST7735_RED) {
+				tft.fillRect(0, screen_height - health_bar_height, screen_width, health_bar_height, ST7735_WHITE);
+				tft.fillRect(0, screen_height - health_bar_height, players->health, health_bar_height, ST7735_RED);
+			} else if (player->color == ST7735_BLUE){
+				tft.fillRect(0, 0, screen_width, health_bar_height, ST7735_WHITE);
+				tft.fillRect(0, 0, player->health, health_bar_height, ST7735_BLUE);
+			}
+			break;
+		case 1:
+			player->defense = 0;
+			break;
+		case 2:
+			player->damageModifier = 3;
+			break;
+		case 3:
+			player->burstLimit = 0;
+			break;
+	}
+
+	if (player->color == ST7735_RED) {
+		tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height, ST7735_YELLOW);
+	} else if (player->color == ST7735_BLUE){
+		tft.fillRect(0, health_bar_height, screen_width, health_bar_height, ST7735_YELLOW);
+	}
+
+	player->powerUpTimer = millis();
+
+	// allows another power up to spawn
+	powerUp->onMap = 0;
+	powerUp->timer = millis();
+}
+
+void updatePowerUpState(Player* player){
+	int powerUpWidth;
+	int powerUpDuration = millis() - player->powerUpTimer;
+
+	if (player->powerUpTimer != -1 && powerUpDuration > 5000){
+		// returns player to normal state
+		player->defense = 1;
+		player->damageModifier = 1;
+		player->burstLimit = 100;
+		player->powerUpTimer = -1;
+	} else if (player->powerUpTimer != -1){
+		// set this up so it does not happen on every frame
+		powerUpWidth = screen_width - map(powerUpDuration, 0, 5000, 0, screen_width);
+		
+		if (player->color == ST7735_RED) {
+			tft.fillRect(0, screen_height - health_bar_height*2, screen_width, health_bar_height, ST7735_WHITE);
+			tft.fillRect(0, screen_height - health_bar_height*2, powerUpWidth, health_bar_height, ST7735_YELLOW);
+		} else if (player->color == ST7735_BLUE){
+			tft.fillRect(0, health_bar_height, screen_width, health_bar_height, ST7735_WHITE);
+			tft.fillRect(0, health_bar_height, powerUpWidth, health_bar_height, ST7735_YELLOW);
+		}
+
+	}
+}
 
 // return 1 if we just shot
 int newProjectile(int dt, Player *player, int size, int damage) {
@@ -116,6 +249,7 @@ void moveProjectile(int dt, Projectile *projectile) {
 
 }
 
+// make it take in pointers
 void checkCollisions() {
 	// checks if player 2 is hit
 	for (int i = 0; i < NUM_PROJECTILES; i++){
@@ -126,7 +260,7 @@ void checkCollisions() {
 				&& players[0].projectiles[i].vert < players[1].y + playerSize){
 
 				Serial.println("P2 HIT!");
-				players[1].health -= players[0].projectiles[i].damage;
+				players[1].health -= players[0].projectiles[i].damage*players[1].defense;
 				players[0].projectiles[i].horSpeed = 0.0; // reset projectile
 				players[0].projectiles[i].vertSpeed = 0.0;
 				tft.fillRect(players[0].projectiles[i].hor, players[0].projectiles[i].vert, players[0].projectiles[i].size, players[0].projectiles[i].size, tft.Color565(0x00, 0xff, 0xff));
@@ -149,7 +283,7 @@ void checkCollisions() {
 				&& players[1].projectiles[i].vert < players[0].y + playerSize){
 
 				Serial.println("P2 HIT!");
-				players[0].health -= players[1].projectiles[i].damage;
+				players[0].health -= players[1].projectiles[i].damage*players[0].defense;
 				players[1].projectiles[i].horSpeed = 0.0; // reset projectile
 				players[1].projectiles[i].vertSpeed = 0.0;
 				tft.fillRect(players[1].projectiles[i].hor, players[1].projectiles[i].vert, players[1].projectiles[i].size, players[1].projectiles[i].size, tft.Color565(0x00, 0xff, 0xff));
@@ -158,6 +292,24 @@ void checkCollisions() {
 				players[1].projectiles[i].vert = -100.0;
 				tft.fillRect(0, screen_height - health_bar_height, screen_width, health_bar_height, ST7735_WHITE);
 				tft.fillRect(0, screen_height - health_bar_height, players[0].health, health_bar_height, ST7735_RED);
+			}
+		}
+	}
+
+	// this might works
+	if (powerUp.onMap == 1) {
+		for(int i = 0; i < numPlayers; i++){
+			if(players[i].x + playerSize/2 > powerUp.x
+				&& players[i].x + playerSize/2 < powerUp.x + powerUpSize
+				&& players[i].y + playerSize/2 > powerUp.y 
+				&& players[i].y + playerSize/2 < powerUp.y + powerUpSize){
+
+				tft.fillRect(powerUp.x, powerUp.y, powerUpSize, powerUpSize, tft.Color565(0x00, 0xff, 0xff));
+				tft.fillRect(players[i].x, players[i].y, playerSize, playerSize, players[i].color);
+
+				// applys power up effect to player
+				applyPowerUp(&players[i], &powerUp);
+
 			}
 		}
 	}
@@ -212,13 +364,15 @@ void updateCharacters(int dt, Player *player) {
 
 	player->x = newX;
 	player->y = newY;
+
+	updatePowerUpState(player);
 }
 
 void updateProjectiles(int dt, Player *player) {
 	int shooting;
 	if(abs(player->vertShoot) > threshold || abs(player->horShoot) > threshold) {
-		if(millis() - player->shootTimer > 100) {
-			shooting = newProjectile(dt, player, 2, default_damage);
+		if(millis() - player->shootTimer > player->burstLimit) {
+			shooting = newProjectile(dt, player, 2, default_damage*player->damageModifier);
 			player->shootTimer = millis();
 		}
 	}
@@ -357,6 +511,7 @@ void mainMenu() {
 
 }
 
+// need to finish
 void instructionsMenu() {
 	tft.fillScreen(ST7735_BLACK);
 	tft.setTextWrap(true);
@@ -386,6 +541,11 @@ void initializeGame() {
 	for (int i = 0; i < numPlayers; i++){
 		players[i].x = (screen_width / 2) - 2;
 		players[i].health = 128;
+		players[i].defense = 1;
+		players[i].damageModifier = 1;
+		players[i].burstLimit = 100;
+		// -1 state represents not having a powerUp
+		players[i].powerUpTimer = -1;
 		players[i].shootTimer = millis();
 
 		// resets projectiles
@@ -428,6 +588,7 @@ void initializeGame() {
 	tft.fillRect(56, 72, 16, 4, tft.Color565(0x00, 0xff, 0xff));
 	tft.fillRect(60, 80, 16, 4, tft.Color565(0x00, 0xff, 0xff));
 	delay(1000);
+	
 	// 1 
 	tft.fillRect(56, 68, 20, 20,  tft.Color565(0x00, 0xff, 0xff));
 	tft.fillRect(64, 68, 4, 20, ST7735_BLACK);
@@ -448,6 +609,8 @@ void initializeGame() {
 	// finishes drawing countdown
 
 	// enters gameplay state
+	powerUp.timer = millis();
+	powerUp.onMap = 0;
 	gameState = 3;
 }
 
@@ -617,10 +780,7 @@ void endMenu(int playerID) {
 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			break;
 		}
-
 	}
-
-
 }
 
 void setup() {
@@ -659,7 +819,7 @@ void loop() {
 
 	getInput(dt);
 
-		// checks current game state
+	// checks current game state
 	switch (gameState) {
 		case 0 :
 			mainMenu();
@@ -679,6 +839,7 @@ void loop() {
 			updateProjectiles(dt, &players[0]);
 			updateProjectiles(dt, &players[1]);
 			checkCollisions();
+			spawnPowerUp(&powerUp);
 
 			if (!digitalRead(JOYSTICK0_MOVE_BUTTON)) {
 				gameState = 4;
