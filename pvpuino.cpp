@@ -214,7 +214,7 @@ void drawPowerUp(Power* powerUp) {
 }
 
 void spawnPowerUp(Power* powerUp){
-	if(millis() - powerUp->timer > 5000 && powerUp->onMap == 0) {
+	if(millis() - powerUp->timer > 10000 && powerUp->onMap == 0) {
 		if (random(2)){
 			
 			int randomX = random(127-powerUpSize);
@@ -250,9 +250,10 @@ void spawnPowerUp(Power* powerUp){
 
 void applyPowerUp(Player* player, Power* powerUp){
 	playSound(6);
+	int newHealth = player->health + 30;
 	switch (powerUp->type) {
 		case 0:
-			player->health += 30;
+			player->health = min(128, newHealth);
 			// updates health bar
 			if (player->ID == 0) {
 				tft.fillRect(0, screen_height - health_bar_height, screen_width, health_bar_height, ST7735_BLACK);
@@ -676,7 +677,7 @@ void mapSelection() {
     tft.setTextColor(ST7735_WHITE);
     tft.print("Select Map");
 
-    tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_WHITE);
+    tft.fillRect((screen_width - 84)/2, 32, 84, 16, wallColors[0]);
 	tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
 	tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
 	tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
@@ -715,7 +716,7 @@ void mapSelection() {
 			playSound(1);
 			mapID = 0;
 
-			tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 32, 84, 16, wallColors[0]);
 			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
 
@@ -735,7 +736,7 @@ void mapSelection() {
 
 			tft.fillRect((screen_width - 84)/2, 32, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 32, 84, 16, ST7735_WHITE);
-			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 56, 84, 16, wallColors[1]);
 			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
 
@@ -759,7 +760,7 @@ void mapSelection() {
 
 			tft.fillRect((screen_width - 84)/2, 56, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 56, 84, 16, ST7735_WHITE);
-			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 80, 84, 16, wallColors[2]);
 			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
 
@@ -783,7 +784,7 @@ void mapSelection() {
 
 			tft.fillRect((screen_width - 84)/2, 80, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 80, 84, 16, ST7735_WHITE);
-			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 104, 84, 16, wallColors[3]);
 			tft.fillRect((screen_width - 84)/2, 128, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
 
@@ -805,7 +806,7 @@ void mapSelection() {
 			playSound(1);
 			mapID = 4;
 
-			tft.fillRect((screen_width - 84)/2, 128, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 128, 84, 16, wallColors[4]);
 			tft.fillRect((screen_width - 84)/2, 104, 84, 16, ST7735_BLACK);
 			tft.drawRect((screen_width - 84)/2, 104, 84, 16, ST7735_WHITE);
 
@@ -978,8 +979,9 @@ void pauseMenu(){
     tft.setTextColor(ST7735_WHITE);
     tft.print("Game Paused");
 
-	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 	tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+	tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 
 	tft.setCursor((screen_width - 84)/2 + 24, 82);
     tft.setTextColor(ST7735_BLACK);
@@ -1005,6 +1007,7 @@ void pauseMenu(){
 			playSound(1);
 			//highlight second button
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 
 			tft.setCursor((screen_width - 84)/2 + 24, 82);
@@ -1019,8 +1022,9 @@ void pauseMenu(){
 		} else if (players[0].vertMove < -threshold && gameState!= 2){
 			playSound(1);
 			//highlight first button
-			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
-			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 
 			tft.setCursor((screen_width - 84)/2 + 24, 82);
 	    	tft.setTextColor(ST7735_BLACK);
@@ -1085,8 +1089,9 @@ void endMenu(int playerID) {
 
     playSound(7);
 
-	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 	tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+	tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
+	tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 
 	tft.setCursor((screen_width - 84)/2 + 18, 82);
     tft.setTextColor(ST7735_BLACK);
@@ -1122,6 +1127,7 @@ void endMenu(int playerID) {
 			playSound(1);
 			//highlight second button
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 
 			tft.setCursor((screen_width - 84)/2 + 18, 82);
@@ -1137,6 +1143,7 @@ void endMenu(int playerID) {
 			playSound(1);
 			//highlight first button
 			tft.fillRect((screen_width - 84)/2, 102, 84, 16, ST7735_BLACK);
+			tft.drawRect((screen_width - 84)/2, 102, 84, 16, ST7735_WHITE);
 			tft.fillRect((screen_width - 84)/2, 78, 84, 16, ST7735_WHITE);
 
 			tft.setCursor((screen_width - 84)/2 + 18, 82);
