@@ -643,12 +643,14 @@ void initializeGame() {
 	// 1 
 	playSound(3);
 	tft.fillRect(54, 68, 20, 20, ST7735_BLACK);
+	drawWalls(currentWalls, currentLevel);
 	tft.fillRect(62, 68, 4, 20, ST7735_WHITE);
 	delay(1000);
 
 	//go
 	playSound(4);
-	tft.fillRect(62, 68, 4, 20, ST7735_BLACK);
+
+	tft.fillRect(62, 68, 4, 20, ST7735_BLACK);	
 	tft.fillRect(42, 64, 20, 20, ST7735_WHITE);
 	tft.fillRect(46, 68, 16, 4, ST7735_BLACK);
 	tft.fillRect(46, 72, 4, 8, ST7735_BLACK);
@@ -656,6 +658,7 @@ void initializeGame() {
 
 	tft.fillRect(66, 64, 20, 20, ST7735_WHITE);
 	tft.fillRect(70, 68, 12, 12, ST7735_BLACK);
+		
 	delay(300);
 
 	tft.fillRect(38, 64, 66, 20,  ST7735_BLACK);
@@ -943,12 +946,9 @@ void mainMenu() {
 }
 
 void instructionsMenu() {
-	tft.fillScreen(ST7735_BLACK);
-	tft.setTextWrap(true);
-	tft.setCursor(0,0);
-    tft.setTextColor(ST7735_WHITE);
-	tft.print("Instructions coming soon!");
- 	
+	int page = 0;
+ 	int initialLoad = 1;
+
  	// infintie loop until an option is selected
  	uint32_t startTime = millis();
 	while(1) {
@@ -956,8 +956,76 @@ void instructionsMenu() {
 		uint32_t dt = currentTime - startTime;
 		getInput(dt);
 
+		if (initialLoad == 1 || players[0].vertMove < -threshold && page == 1) {
+				initialLoad = 0;
+				page = 0;
+
+				tft.fillScreen(ST7735_BLACK);
+				tft.setTextWrap(true);
+				tft.setCursor(0,0);
+    			tft.setTextColor(ST7735_YELLOW);
+				tft.print("How to Play PVPuino!\n\n");
+				tft.setTextColor(ST7735_WHITE);
+				tft.print("Objective:\n");
+				tft.print("Aim shots at the other player until their health is depleted.\n\n");
+				tft.print("Basic Controls:\n");
+				tft.print("Left Joystick: Moves Player\n");
+				tft.print("Right Joystick: Aims Shot\n\n");
+				tft.print("Menu Controls:\n");
+				tft.print("Player 1's move joystick is used to navigate the menu. ");
+				tft.print("Clicking the joystick will select the highlighted\n");
+
+				tft.setCursor(0, 152);
+    			tft.setTextColor(ST7735_GREEN);
+    			tft.print("Page 1/2");
+
+		} else if (players[0].vertMove > threshold && page == 0) {
+				page = 1;
+
+				tft.fillScreen(ST7735_BLACK);
+				tft.setTextWrap(true);
+				tft.setCursor(0,0);
+    			tft.setTextColor(ST7735_WHITE);
+				
+				tft.print("menu button. Sound can be disabled by clicking Player 1's shoot joystick.\n\n");
+    			tft.print("Power Ups:\n\n");
+
+    			tft.drawRect(10, 53, powerUpSize, powerUpSize, ST7735_RED);
+				tft.fillRect(10, 56, powerUpSize, 2, ST7735_RED);
+				tft.fillRect(13, 53, 2, powerUpSize, ST7735_RED);
+
+				tft.drawRect(26, 53, powerUpSize, powerUpSize, ST7735_BLUE);
+				tft.fillRect(26, 56, powerUpSize, 2, ST7735_BLUE);
+				tft.fillRect(29, 53, 2, powerUpSize, ST7735_BLUE);
+
+				tft.drawRect(42, 53, powerUpSize, powerUpSize, ST7735_YELLOW);
+				tft.fillRect(42, 56, powerUpSize, 2, ST7735_YELLOW);
+				tft.fillRect(45, 53, 2, powerUpSize, ST7735_YELLOW);
+
+				tft.drawRect(58, 53, powerUpSize, powerUpSize, ST7735_GREEN);
+				tft.fillRect(58, 56, powerUpSize, 2, ST7735_GREEN);
+				tft.fillRect(61, 53, 2, powerUpSize, ST7735_GREEN);
+
+				tft.setCursor(0,68);
+    			tft.setTextColor(ST7735_RED);
+				tft.print("Red: Restores health\n");
+
+				tft.setTextColor(ST7735_BLUE);
+				tft.print("Blue: Grants invincibility\n");
+
+				tft.setTextColor(ST7735_YELLOW);
+				tft.print("Yellow: Double damage");
+
+				tft.setTextColor(ST7735_GREEN);
+				tft.print("Green: Bullet burst mode\n");
+
+				tft.setCursor(0, 152);
+    			tft.setTextColor(ST7735_GREEN);
+    			tft.print("Page 2/2");		
+    	}
+
  		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
- 			playSound(2);
+			playSound(2);
 			break;
 		}
 
