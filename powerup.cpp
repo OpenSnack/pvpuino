@@ -134,15 +134,12 @@ void updatePowerUpState(Player* player){
 			tft.fillRect(0, HEALTH_BAR_HEIGHT, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, wallColors[currentLevel]);
 		}
 	} else if (player->powerUpTimer != -1){
-		// set this up so it does not happen on every frame
-		powerUpWidth = SCREEN_WIDTH - map(powerUpDuration, 0, 5000, 0, SCREEN_WIDTH);
+		powerUpWidth = map(powerUpDuration, 0, 5000, 0, SCREEN_WIDTH);
 		
 		if (player->ID == 0) {
-			tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT*2, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, wallColors[currentLevel]);
-			tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT*2, powerUpWidth, HEALTH_BAR_HEIGHT, ST7735_YELLOW);
+			tft.fillRect(SCREEN_WIDTH - powerUpWidth, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT*2, powerUpWidth, HEALTH_BAR_HEIGHT, wallColors[currentLevel]);
 		} else if (player->ID == 1) {
-			tft.fillRect(0, HEALTH_BAR_HEIGHT, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, wallColors[currentLevel]);
-			tft.fillRect(0, HEALTH_BAR_HEIGHT, powerUpWidth, HEALTH_BAR_HEIGHT, ST7735_YELLOW);
+			tft.fillRect(SCREEN_WIDTH - powerUpWidth, HEALTH_BAR_HEIGHT, powerUpWidth, HEALTH_BAR_HEIGHT, wallColors[currentLevel]);
 		}
 
 	}
