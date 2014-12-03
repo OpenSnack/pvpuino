@@ -31,7 +31,7 @@ void initializeGame() {
 		}
 	}
 
-	players[0].color = ST7735_RED;
+	players[0].color = ST7735_MAGENTA;
 	players[1].color = ST7735_CYAN;
 
 	tft.fillScreen(ST7735_BLACK);
@@ -87,7 +87,7 @@ void initializeGame() {
 
 	// health bars
 	tft.fillRect(0, 0, players[1].health, HEALTH_BAR_HEIGHT, ST7735_CYAN);
-	tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, players[0].health, HEALTH_BAR_HEIGHT, ST7735_RED);
+	tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, players[0].health, HEALTH_BAR_HEIGHT, ST7735_MAGENTA);
 
 	// draws countdown
 	// 3
@@ -303,10 +303,10 @@ void mainMenu() {
 	// draws main menu screen
 	tft.fillScreen(ST7735_BLACK);
 	// P
-	tft.fillRect(12, 32, 4, 24, ST7735_RED);
-	tft.fillRect(16, 32, 4, 4, ST7735_RED);
-	tft.fillRect(20, 36, 4, 4, ST7735_RED);
-	tft.fillRect(16, 40, 4, 4, ST7735_RED);
+	tft.fillRect(12, 32, 4, 24, ST7735_MAGENTA);
+	tft.fillRect(16, 32, 4, 4, ST7735_MAGENTA);
+	tft.fillRect(20, 36, 4, 4, ST7735_MAGENTA);
+	tft.fillRect(16, 40, 4, 4, ST7735_MAGENTA);
 	// v
 	tft.fillRect(28, 44, 4, 4, ST7735_WHITE);
 	tft.fillRect(30, 48, 4, 4, ST7735_WHITE);
@@ -579,12 +579,14 @@ void pauseMenu(){
 		tft.fillRect(players[1].x, players[1].y, PLAYER_SIZE, PLAYER_SIZE, players[1].color);
 
 		// height boundaries
-		tft.fillRect(0, 0, SCREEN_WIDTH, HEALTH_BAR_HEIGHT*2, ST7735_WHITE);
+		tft.fillRect(0, 0, SCREEN_WIDTH, HEALTH_BAR_HEIGHT*2, wallColors[currentLevel]);
 		tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT*2, SCREEN_WIDTH, HEALTH_BAR_HEIGHT*2, wallColors[currentLevel]);
 
 		// health bars
+		tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, ST7735_BLACK);
+		tft.fillRect(0, 0, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, ST7735_BLACK);
 		tft.fillRect(0, 0, players[1].health, HEALTH_BAR_HEIGHT, ST7735_CYAN);
-		tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, players[0].health, HEALTH_BAR_HEIGHT, ST7735_RED);
+		tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, players[0].health, HEALTH_BAR_HEIGHT, ST7735_MAGENTA);
 
 		// walls
 		drawWalls(currentWalls, currentLevel);
@@ -595,6 +597,11 @@ void pauseMenu(){
 		for (int i = 0; i < NUM_PLAYERS; i++){
 			if (players[i].powerUpTimer != -1) {
 				players[i].powerUpTimer += timeDiff;
+				if (players[i].ID == 0) {
+					tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT*2, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, ST7735_YELLOW);
+				} else if (players[i].ID == 1){
+					tft.fillRect(0, HEALTH_BAR_HEIGHT, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, ST7735_YELLOW);
+		}
 			}
 		}
 		powerUp.timer += timeDiff;
@@ -634,7 +641,7 @@ void endMenu(int playerID) {
     tft.setCursor(5, SCREEN_HEIGHT - 12);
     tft.setTextColor(ST7735_BLACK);
     tft.print("Wins: ");
-    tft.setTextColor(ST7735_RED);
+    tft.setTextColor(ST7735_MAGENTA);
     tft.print("P1:");
     tft.print(players[0].wins);
     tft.setTextColor(ST7735_BLUE);

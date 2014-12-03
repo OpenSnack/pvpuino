@@ -79,7 +79,7 @@ void applyPowerUp(Player* player, Power* powerUp) {
 			// updates health bar
 			if (player->ID == 0) {
 				tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, ST7735_BLACK);
-				tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, player->health, HEALTH_BAR_HEIGHT, ST7735_RED);
+				tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, player->health, HEALTH_BAR_HEIGHT, ST7735_MAGENTA);
 			} else if (player->ID == 1){
 				tft.fillRect(0, 0, SCREEN_WIDTH, HEALTH_BAR_HEIGHT, ST7735_BLACK);
 				tft.fillRect(0, 0, player->health, HEALTH_BAR_HEIGHT, ST7735_CYAN);
@@ -124,7 +124,7 @@ void updatePowerUpState(Player* player){
 		player->burstLimit = 100;
 		player->powerUpTimer = -1;
 		if(player->ID == 0) {
-			player->color = ST7735_RED;
+			player->color = ST7735_MAGENTA;
 		} else if(player->ID == 1) {
 			player->color = ST7735_CYAN;
 		}

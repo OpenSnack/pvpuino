@@ -4,8 +4,9 @@
 
 int soundOn = 1;
 
+// receives all input from the joysticks associated with the player
 void getInput(int dt, Player *player) {
-	// finds the difference between the current joystick potion and the
+	// finds the difference between the current joystick position and the
 	// calibrated center
 	if(player->ID == 0) {
 		player->vertMove = analogRead(JOYSTICK0_MOVE_VERT) - player->naturalVertMove;
@@ -25,6 +26,7 @@ void getInput(int dt, Player *player) {
 		player->horShoot = -(analogRead(JOYSTICK1_SHOOT_HORIZ) - player->naturalHorShoot);
 	}
 
+	// controls mute/unmute of sound
 	if(!digitalRead(JOYSTICK0_SOUND_BUTTON)) {
 		soundOn = !soundOn;
 		delay(200);

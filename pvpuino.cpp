@@ -16,12 +16,14 @@ void setup() {
 	Serial.begin(9600);
 	randomSeed(analogRead(15));
 
+	// initialize wallColors
 	wallColors[0] = tft.Color565(0xFF, 0xFF, 0xFF);
-	wallColors[1] = tft.Color565(0xFF, 0x00, 0xCC);
+	wallColors[1] = tft.Color565(0xFF, 0x00, 0x00);
 	wallColors[2] = tft.Color565(0x00, 0xFF, 0x00);
 	wallColors[3] = tft.Color565(0xFF, 0x8D, 0x00);
 	wallColors[4] = tft.Color565(0x00, 0x00, 0xFF);
 
+	// initialize display and joysticks
 	tft.initR(INITR_BLACKTAB); 
 	digitalWrite(JOYSTICK0_MOVE_BUTTON, HIGH);
 	digitalWrite(JOYSTICK0_SOUND_BUTTON, HIGH);
@@ -44,34 +46,35 @@ void setup() {
 	//initial wins
 	players[0].wins = 0;
 	players[1].wins = 0;
-
-	// disables player 2
-	// players[1].naturalVertMove = 0;
-	// players[1].naturalHorMove = 0;
-	// players[1].naturalVertShoot = 0;
-	// players[1].naturalHorShoot = 0;
 }
 
 uint32_t lastTime = millis();
 
+/* main game loop. the main game and the menus are all different gameStates
+   that are set by the menus, which update on the next loop. input and movement
+   updates are dependent on the time since the last update for consistent speeds */
 void loop() {
 	uint32_t now = millis();
 	int dt = now - lastTime;
 
+	// get joystick input from both players
 	getInput(dt, &players[0]);
 	getInput(dt, &players[1]);
 
-	// checks current game state
+	// check current game state
 	switch (gameState) {
 		case 0 :
+			// main menu
 			mainMenu();
 			lastTime = millis();
 			break;
 		case 1 :
+			// instructions
 			instructionsMenu();
 			lastTime = millis();
 			break;
 		case 2 :
+			// main game
 			updateCharacters(dt, &players[0]);
 			updateCharacters(dt, &players[1]);
 			updateProjectiles(dt, &players[0]);
@@ -80,10 +83,12 @@ void loop() {
 			checkCollisions(&players[1], &players[0]);
 			spawnPowerUp(&powerUp);
 
+			// if player1 clicks, enter pause menu
 			if (!digitalRead(JOYSTICK0_MOVE_BUTTON)) {
 				gameState = 3;
 			}
 
+			// win condition, also updates win counter
 			if(players[1].health <= 0) {
 				players[0].wins++;
 				endMenu(0);
@@ -96,6 +101,7 @@ void loop() {
 			lastTime = now;
 			break;
 		case 3:
+			// pause menu
 			pauseMenu();
 			lastTime = millis();
 			break;

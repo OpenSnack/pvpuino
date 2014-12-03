@@ -2,6 +2,7 @@
 #include "joystick.h"
 #include "sound.h"
 
+// contains all sounds the game makes use of
 void playSound(int type) {
 	if(soundOn) {
 		switch(type) {

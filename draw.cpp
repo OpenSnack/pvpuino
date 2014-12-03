@@ -11,6 +11,8 @@
 
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+// defines the positions of the walls in each of the five levels
+// all levels have the same 4 outer walls (the first four)
 Wall level0[4] = {{-30, -20, 188, 30},{-30, 150, 188, 30},{-30, -20, 30, 200},{128, -20, 30, 200}};
 Wall level1[8] = {{-30, -20, 188, 30},{-30, 150, 188, 30},{-30, -20, 30, 200},{128, -20, 30, 200},{36, 34, 56, 4},{36, 122, 56, 4},{20, 52, 4, 56},{104, 52, 4, 56}};
 Wall level2[10] = {{-30, -20, 188, 30},{-30, 150, 188, 30},{-30, -20, 30, 200},{128, -20, 30, 200},{28, 32, 22, 22},{18, 76, 28, 28},{36, 124, 10, 10},{88, 24, 14, 14},{70, 54, 22, 22},{76, 96, 34, 34}};
@@ -22,13 +24,15 @@ int wallColors[5];
 Wall *currentWalls;
 int currentLevel;
 
+// iterate through the array of walls and draw each one
 void drawWalls(Wall *level, int currentLevel) {
 	for(int i = 4; i < numWalls[currentLevel]; i++) {
 		tft.fillRect(level[i].x, level[i].y, level[i].width, level[i].height, wallColors[currentLevel]);
 	}
 }
 
-// return 1 if we just shot
+// takes any despawned projectile (speed = 0) in the array and turns it into a new spawned one
+// return 1 if we just shot (ie there was room left in the projectile array to spawn)
 int newProjectile(int dt, Player *player, int size, int damage) {
 	for(int i = 0; i < NUM_PROJECTILES; i++) {
 		Projectile *proj = &player->projectiles[i];
@@ -38,9 +42,10 @@ int newProjectile(int dt, Player *player, int size, int damage) {
 			proj->size = size;
 			proj->damage = damage;
 			proj->color = player->color;
-			// this normalizes the shooting input so that magnitude of projectile speed doesn't change
+			// places the new projectile in the center of the player that shot it
 			proj->x = player->x + (float)PLAYER_SIZE/2.0 - (float)proj->size/2.0;
 			proj->y = player->y + (float)PLAYER_SIZE/2.0 - (float)proj->size/2.0;
+			// this normalizes the shooting input so that magnitude of projectile speed doesn't change
 			float square = (float)abs((vertShoot * vertShoot) + (horShoot * horShoot));
 			proj->vertSpeed = vertShoot / (float)sqrt(square) / 8.0;
 			proj->horSpeed = horShoot / (float)sqrt(square) / 8.0;
@@ -51,17 +56,23 @@ int newProjectile(int dt, Player *player, int size, int damage) {
 	return 0;
 }
 
+// moves a projectile according to its defined speed, and checks for a collision with a wall
 void moveProjectile(int dt, Projectile *proj) {
 
+	// redraw the background
 	tft.fillRect((int)proj->x, (int)proj->y, proj->size, proj->size, ST7735_BLACK);
 	
+	// this speed is relative to the time that the frame took to draw (dt)
 	proj->x += proj->horSpeed * dt;
 	proj->y += proj->vertSpeed * dt;
 	
+	// iterate through the walls and determine if there was a collision
 	Wall wall;
 	for(int i = 0; i < numWalls[currentLevel]; i++) {
 		wall = currentWalls[i];
-		if(collide(proj->x, proj->y, proj->size, proj->size, wall.x, wall.y, wall.width, wall.height)) {
+		// if there was a collision, despawn the projectile
+		if(collide(proj->x, proj->y, proj->size, proj->size, wall.x, wall.y, wall.width, wall.height)
+			|| proj->x < 0 || proj->y < 0 || proj->x > SCREEN_WIDTH || proj->y > SCREEN_HEIGHT - HEALTH_BAR_HEIGHT*2) {
 			proj->vertSpeed = 0.0;
 			proj->horSpeed = 0.0;
 			proj->x = -100.0; // offscreen
@@ -69,9 +80,11 @@ void moveProjectile(int dt, Projectile *proj) {
 			return;
 		}
 	}
+	// redraw the projectile
 	tft.fillRect((int)proj->x, (int)proj->y, proj->size, proj->size, proj->color);
 }
 
+// moves the player according to their defined speed (which was multiplied by dt)
 void updateCharacters(int dt, Player *player) {
 	float newX = player->x;
 	float newY = player->y;
@@ -83,14 +96,17 @@ void updateCharacters(int dt, Player *player) {
 	if(player->vertMove > THRESHOLD) {
 		for(int i = 0; i < numWalls[currentLevel]; i++) {
 			wall = currentWalls[i];
+			// similar to the collide code
 			if(newY + PLAYER_SIZE > wall.y - player->vertSpeed && newY + PLAYER_SIZE < wall.y + wall.height - player->vertSpeed) {
 				if(newX + PLAYER_SIZE > wall.x && newX < wall.x + wall.width) {
 					newY = (float)(wall.y - PLAYER_SIZE);
+					// if we collide, set a variable that tells us not to move
 					touching = 1;
 					break;
 				}
 			}
 		}
+		// if we didn't collide, move
 		if(!touching) {
 			newY += player->vertSpeed;
 		}
@@ -161,21 +177,25 @@ void updateCharacters(int dt, Player *player) {
 	player->x = newX;
 	player->y = newY;
 
+	// continue applying any powerup effects to the player
 	updatePowerUpState(player);
 }
 
+// controls the spawning and movement of projectiles
 void updateProjectiles(int dt, Player *player) {
 	int shooting;
 	if(abs(player->vertShoot) > THRESHOLD || abs(player->horShoot) > THRESHOLD) {
 		if(millis() - player->shootTimer > player->burstLimit) {
+			// newProjectile() returns 1 if we shot
 			shooting = newProjectile(dt, player, 2, DEFAULT_DAMAGE*player->damageModifier);
 			player->shootTimer = millis();
 		}
 	}
-
+	// update all spawned projectiles
 	for(int i = 0; i < NUM_PROJECTILES; i++) {
 		moveProjectile(dt, &player->projectiles[i]);
 	}
+	// prevents drawing over top of the player if they weren't moving
 	if(shooting) {
 		tft.fillRect(player->x, player->y, PLAYER_SIZE, PLAYER_SIZE, player->color);
 	}
