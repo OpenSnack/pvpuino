@@ -12,14 +12,13 @@
 int gameState = 0;
 
 void initializeGame() {
-	// intializes player properties
+	// initializes player properties
 	for (int i = 0; i < NUM_PLAYERS; i++){
 		players[i].health = 128;
 		players[i].defense = 1;
 		players[i].damageModifier = 1;
 		players[i].burstLimit = 100;
-		// -1 state represents not having a powerUp
-		players[i].powerUpTimer = -1;
+		players[i].powerUpTimer = -1; // -1 state represents not having a powerUp
 		players[i].shootTimer = millis();
 
 		// resets projectiles
@@ -31,6 +30,7 @@ void initializeGame() {
 		}
 	}
 
+	// initializes player colors
 	players[0].color = ST7735_MAGENTA;
 	players[1].color = ST7735_CYAN;
 
@@ -90,26 +90,27 @@ void initializeGame() {
 	tft.fillRect(0, SCREEN_HEIGHT - HEALTH_BAR_HEIGHT, players[0].health, HEALTH_BAR_HEIGHT, ST7735_MAGENTA);
 
 	// draws countdown
-	// 3
+	// draw 3
 	playSound(3);
 	tft.fillRect(54, 68, 20, 20, ST7735_WHITE);
 	tft.fillRect(54, 72, 16, 4, ST7735_BLACK);
 	tft.fillRect(54, 80, 16, 4, ST7735_BLACK);
 	delay(1000);
 
-	// 2
+	// draw 2
 	playSound(3);
 	tft.fillRect(54, 68, 20, 20, ST7735_WHITE);
 	tft.fillRect(54, 72, 16, 4, ST7735_BLACK);
 	tft.fillRect(58, 80, 16, 4, ST7735_BLACK);
 	delay(1000);
-	// 1 
+	
+	//  draw 1 
 	playSound(3);
 	tft.fillRect(54, 68, 20, 20, ST7735_BLACK);
 	tft.fillRect(62, 68, 4, 20, ST7735_WHITE);
 	delay(1000);
 
-	//go
+	// draw go
 	playSound(4);
 	tft.fillRect(62, 68, 4, 20, ST7735_BLACK);
 	tft.fillRect(42, 64, 20, 20, ST7735_WHITE);
@@ -124,17 +125,19 @@ void initializeGame() {
 	tft.fillRect(38, 64, 66, 20,  ST7735_BLACK);
 	// finishes drawing countdown
 
+	// redraws walls in the case the countdown drew over them
 	drawWalls(currentWalls, currentLevel);
 
-	// enters gameplay state
+	// enters game-play state
 	powerUp.timer = millis();
 	powerUp.onMap = 0;
 	gameState = 2;
 }
 
 void mapSelection() {
-	int mapID = 0;
+	int mapID = 0; // default map selection
 
+	// draws map Selection menu
 	tft.fillScreen(ST7735_BLACK);
 	tft.setCursor((SCREEN_WIDTH - 84)/2 + 10, 12);
     tft.setTextColor(ST7735_WHITE);
@@ -167,14 +170,16 @@ void mapSelection() {
     tft.setCursor((SCREEN_WIDTH - 84)/2 + 12, 132);
     tft.setTextColor(ST7735_WHITE);
     tft.print("Final Dest.");
+    // end of drawing
 
-	// infinte loop until an option is selected
+	// infinite loop until an option is selected
  	uint32_t startTime = millis();
 	while(1) {
 		uint32_t currentTime = millis();
 		uint32_t dt = currentTime - startTime;
 		getInput(dt, &players[0]);
 
+		// redraws buttons as the player changes menu selection
 		if (players[0].vertMove < -THRESHOLD && mapID == 1) {
 			playSound(1);
 			mapID = 0;
@@ -285,6 +290,7 @@ void mapSelection() {
 
 		}
 
+		// breaks loop once button is pressed
  		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
  			playSound(2);
 			break;
@@ -293,45 +299,47 @@ void mapSelection() {
  		startTime = currentTime;
  	} 
 
+ 	// proceeds to game initialization
  	currentLevel = mapID;
  	initializeGame();
 }
 
 void mainMenu() {
-	int menuSelection = 1;
+	int menuSelection = 1; // default selection
 
 	// draws main menu screen
 	tft.fillScreen(ST7735_BLACK);
-	// P
+	// draws P
 	tft.fillRect(12, 32, 4, 24, ST7735_MAGENTA);
 	tft.fillRect(16, 32, 4, 4, ST7735_MAGENTA);
 	tft.fillRect(20, 36, 4, 4, ST7735_MAGENTA);
 	tft.fillRect(16, 40, 4, 4, ST7735_MAGENTA);
-	// v
+	// draws v
 	tft.fillRect(28, 44, 4, 4, ST7735_WHITE);
 	tft.fillRect(30, 48, 4, 4, ST7735_WHITE);
 	tft.fillRect(32, 52, 4, 4, ST7735_WHITE);
 	tft.fillRect(34, 48, 4, 4, ST7735_WHITE);
 	tft.fillRect(36, 44, 4, 4, ST7735_WHITE);
-	// P
+	// draws P
 	tft.fillRect(48, 32, 4, 24, ST7735_CYAN);
 	tft.fillRect(52, 32, 4, 4, ST7735_CYAN);
 	tft.fillRect(56, 36, 4, 4, ST7735_CYAN);
 	tft.fillRect(52, 40, 4, 4, ST7735_CYAN);
-	// u
+	// draws u
 	tft.fillRect(64, 44, 12, 12, ST7735_WHITE);
 	tft.fillRect(68, 44, 4, 8, ST7735_BLACK);
-	// i
+	// draws i
 	tft.fillRect(80, 36, 4, 4, ST7735_WHITE);
 	tft.fillRect(80, 44, 4, 12, ST7735_WHITE);
-	// n
+	// draws n
 	tft.fillRect(88, 42, 4, 2, ST7735_WHITE);
 	tft.fillRect(88, 44, 12, 12, ST7735_WHITE);
 	tft.fillRect(92, 48, 4, 8, ST7735_BLACK);
-	// o
+	// draws o
 	tft.fillRect(104, 44, 12, 12, ST7735_WHITE);
 	tft.fillRect(108, 48, 4, 4, ST7735_BLACK);
 
+	// draws menu buttons
 	tft.fillRect((SCREEN_WIDTH - 84)/2, 78, 84, 16, ST7735_WHITE);
 	tft.drawRect((SCREEN_WIDTH - 84)/2, 102, 84, 16, ST7735_WHITE);
 
@@ -345,16 +353,16 @@ void mainMenu() {
     tft.setTextColor(ST7735_WHITE);
     tft.print("Instructions");
     playSound(0);
-    //end of drawing
+    // end of drawing
 
-    // infintie loop until an option is selected
+    // infinite loop until an option is selected
     uint32_t startTime = millis();
 	while(1) {
 		uint32_t currentTime = millis();
 		uint32_t dt = currentTime - startTime;
-
 		getInput(dt, &players[0]);
-		// update postion on menu, updates program state
+
+		// update position on menu and menu selection
 		if (players[0].vertMove > THRESHOLD && menuSelection != 0) {
 			playSound(1);
 			//highlight second button
@@ -397,6 +405,8 @@ void mainMenu() {
 		startTime = currentTime;
 	}
 
+	// depending on the final selection the menu will set the game to 
+	// state 1 (instructions menu) or proceed to mapSelection
 	if (menuSelection == 0){
 		gameState = 1;
 	} else {
@@ -406,16 +416,17 @@ void mainMenu() {
 }
 
 void instructionsMenu() {
-	int page = 0;
- 	int initialLoad = 1;
+	int page = 0; // infinite selection
+ 	int initialLoad = 1; // represents the menu has just loaded
 
- 	// infintie loop until an option is selected
+ 	// infinite loop until an option is selected
  	uint32_t startTime = millis();
 	while(1) {
 		uint32_t currentTime = millis();
 		uint32_t dt = currentTime - startTime;
 		getInput(dt, &players[0]);
 
+		// redraws instruction pages as the user navigates the meny
 		if (initialLoad == 1 || players[0].vertMove < -THRESHOLD && page == 1) {
 				initialLoad = 0;
 				page = 0;
@@ -484,6 +495,7 @@ void instructionsMenu() {
     			tft.print("Page 2/2");		
     	}
 
+    	// breaks loop once joystick button is pressed
  		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			playSound(2);
 			break;
@@ -492,11 +504,12 @@ void instructionsMenu() {
  		startTime = currentTime;
  	} 
 
+ 	// returns to mainMenu state
  	gameState = 0;  
 }
 
 void pauseMenu(){
-	gameState = 2;
+	gameState = 2; // default selection
 	playSound(2);
 	int enterTime = millis();
 
@@ -530,7 +543,7 @@ void pauseMenu(){
 		uint32_t dt = currentTime - startTime;
 
 		getInput(dt, &players[0]);
-		// update postion on menu, updates program state
+		// update position on menu and gameState
 		if (players[0].vertMove > THRESHOLD && gameState != 0) {
 			playSound(1);
 			//highlight second button
@@ -572,7 +585,7 @@ void pauseMenu(){
 
 	}
 
-	// draws the gameplay screen back on
+	// draws the game play screen back on
 	if (gameState == 2) {
 		tft.fillScreen(ST7735_BLACK);
 		tft.fillRect(players[0].x, players[0].y, PLAYER_SIZE, PLAYER_SIZE, players[0].color);
@@ -591,9 +604,9 @@ void pauseMenu(){
 		// walls
 		drawWalls(currentWalls, currentLevel);
 
-		// updates power up timers
 		int timeDiff = millis() - enterTime;
 
+		// displaces powerUp timers by time spent in the pause menu, and redraws powerUp bars
 		for (int i = 0; i < NUM_PLAYERS; i++){
 			if (players[i].powerUpTimer != -1) {
 				players[i].powerUpTimer += timeDiff;
@@ -609,7 +622,7 @@ void pauseMenu(){
 }
 
 void endMenu(int playerID) {
-	int menuSelection = 1;
+	int menuSelection = 1; //default selection
 
 	// draws pause menu
 	tft.setTextWrap(false);
@@ -624,6 +637,7 @@ void endMenu(int playerID) {
 
     playSound(7);
 
+    // draws buttons
 	tft.fillRect((SCREEN_WIDTH - 84)/2, 102, 84, 16, ST7735_BLACK);
 	tft.drawRect((SCREEN_WIDTH - 84)/2, 102, 84, 16, ST7735_WHITE);
 	tft.fillRect((SCREEN_WIDTH - 84)/2, 78, 84, 16, ST7735_WHITE);
@@ -647,7 +661,6 @@ void endMenu(int playerID) {
     tft.setTextColor(ST7735_BLUE);
     tft.print("  P2:");
     tft.print(players[1].wins);
-
     // end of drawing
 
 	uint32_t startTime = millis();
@@ -657,7 +670,7 @@ void endMenu(int playerID) {
 		uint32_t dt = currentTime - startTime;
 
 		getInput(dt, &players[0]);
-		// update postion on menu, updates program state
+		// update position on menu and menu selection
 		if (players[0].vertMove > THRESHOLD && menuSelection != 0) {
 			playSound(1);
 			//highlight second button
@@ -692,11 +705,15 @@ void endMenu(int playerID) {
 			menuSelection = 1;
 		}
 
+		// breaks out of loop once joystick button is pressed
 		if (!digitalRead(JOYSTICK0_MOVE_BUTTON)){
 			playSound(2);
 			break;
 		}
 	}
+
+	// depending on selection the game will enter state 0 (main menu)
+	// or proceed to mapSelection
 	if (menuSelection == 0){
 		gameState = 0;
 	} else {
