@@ -1,17 +1,37 @@
 Steven Boddez & George Antonious, CMPUT 274 Section EA1
-PvPuino - A top down PvP game for Arduino
+
+PvPuino - A top down PvP game for Arduino. Features 360 degree moving and shooting, five different maps to play on, and powerups that are sure to make every game wild! Playtesting has shown this game to be difficult to put down.
 
 Compiling Instructions:
 
+$ cd ../pvpuino
+$ make upload
+
 Software Specifications:
+
+The Arduino standard libraries, as well as the Adafruit GFX libraries (Adafruit_GFX, Adafruit_ST7735) are required to build this project.
+
+The project itself is made up of several files:
+
+collide - most of the collision checking code
+draw - defines walls and display settings, and contains the code for spawning new projectiles and updating the screen
+joystick - gets joystick input
+menu - defines all of the menu layouts, and new game init code
+player - defines the player struct
+power - defines, draws, spawns, applies and updates powerup effects
+projectile - defines projectiles
+sound - defines the game’s sound effects that are called mostly by menu and powerup
+
+and finally,
+pvpuino - the main file for starting up the game, and contains the game loop
 
 Hardware Specifications:
 
-This program is designed for use with two breadboards. Breadboard 1 will represent the breadboard attached to the arduino, and breadboard 2 will represent an independent breadboard wired to the same arduino.
+This program is designed for use with two breadboards. Breadboard 1 will represent the breadboard attached to the Arduino, and breadboard 2 will represent an independent breadboard wired to the same Arduino. The pin placement of the joysticks on the breadboard are not required to be the exact ones written here, but this is the configuration we came up with. We’ve also included some wiring diagrams of a similar configuration.
 
 Breadboard Configuration:
 One wire connecting the 5V pin on the Arduino to pin 1 on the power bus of breadboard 1
-One wire connecting the first ground pin on the Ardiuno to pin 2 on the ground bus on breadboard 1
+One wire connecting the first ground pin on the Arduino to pin 2 on the ground bus on breadboard 1
 One wire connecting pin 3 of the power bus on breadboard 1 to pin 1 of the power bus on breadboard 2
 One wire connecting pin 4 of the ground bus on breadboard 1 to pin 2 of the ground bus on breadboard 2
 
@@ -39,7 +59,7 @@ The 5 joystick pins occupy pins E59-E63 on breadboard 1
 One wire connecting pin C59 on breadboard 1 to pin 47 on the power bus on breadboard 1
 One wire connecting pin B60 on breadboard 1 to analog pin 1 on the Arduino
 One wire connecting pin C61 on breadboard 1 to analog pin 0 on the Arduino
-One wire connecting pin B62 on breadboard 1 to digital pin 2 on the Ardunio
+One wire connecting pin B62 on breadboard 1 to digital pin 2 on the Arduino
 One wire connecting pin C63 on breadboard 1 to pin 48 on the ground bus on breadboard 1
 
 Player One's Shoot Joystick:
@@ -47,10 +67,10 @@ The 5 joystick pins occupy pins E30-E34 on breadboard 1
 One wire connecting pin C30 on breadboard 1 to pin 20 on the power bus on breadboard 1
 One wire connecting pin B31 on breadboard 1 to analog pin 3 on the Arduino
 One wire connecting pin C32 on breadboard 1 to analog pin 2 on the Arduino
-One wire connecting pin B33 on breadboard 1 to digital pin 3 on the Ardunio
+One wire connecting pin B33 on breadboard 1 to digital pin 3 on the Arduino
 One wire connecting pin C34 on breadboard 1 to pin 21 on the ground bus on breadboard 1
 
-Player Two's Move JoysticK:
+Player Two's Move Joystick:
 The 5 joystick pins occupy pins E59-E63 on breadboard 2
 One wire connecting pin C59 on breadboard 2 to pin 47 on the power bus on breadboard 2
 One wire connecting pin B60 on breadboard 2 to analog pin 5 on the Arduino
