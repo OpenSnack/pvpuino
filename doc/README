@@ -4,8 +4,15 @@ PvPuino - A top down PvP game for Arduino. Features 360 degree moving and shooti
 
 Compiling Instructions:
 
-$ cd ../pvpuino
+From the pvpuino directory do
+
+$ make
+
+to build, or
+
 $ make upload
+
+to build and upload to a connected Arduino.
 
 Software Specifications:
 
